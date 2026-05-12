@@ -78,7 +78,7 @@ export function PropertyCard({ property, compact = false, priority = false }: { 
             href={getWhatsAppHref(property)}
             target="_blank"
             rel="noreferrer"
-            className="focus-ring mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--primary)] px-4 text-[13px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--primary-light)] dark:text-[#071411]"
+            className="focus-ring mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--primary)] px-4 text-[13px] font-normal text-white transition hover:-translate-y-0.5 hover:bg-[var(--primary-light)] dark:text-[#071411]"
           >
             <MessageCircle size={17} /> Contact Landlord
           </a>

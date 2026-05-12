@@ -104,7 +104,7 @@ export function Benefit() {
               );
             })}
           </div>
-          <Link href="/properties" className="focus-ring mt-6 flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--primary)] px-5 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(23,166,115,0.22)] transition hover:bg-[var(--primary-light)]">
+          <Link href="/properties" className="focus-ring mt-6 flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--primary)] px-5 text-[15px] font-normal text-white shadow-[0_12px_28px_rgba(23,166,115,0.22)] transition hover:bg-[var(--primary-light)]">
             Start Now <ArrowRight size={18} />
           </Link>
         </div>
