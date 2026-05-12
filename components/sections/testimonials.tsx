@@ -32,8 +32,15 @@ export function Testimonials() {
     <section className="overflow-hidden bg-[var(--background)] py-16 sm:py-20">
       <div className="section-frame">
         <div className="text-left sm:text-center">
-          <h2 className="text-[34px] font-medium leading-[1.12] tracking-[-0.01em] sm:mx-auto sm:max-w-[620px] sm:text-[44px]">
-            What <span className="text-[var(--primary)]">Students</span> Say
+          <h2 className="text-[34px] font-medium leading-[1.22] tracking-[-0.01em] sm:mx-auto sm:max-w-[620px] sm:text-[44px] sm:leading-[1.12]">
+            What{" "}
+            <span className="relative inline-block font-light text-[var(--primary)]">
+              Students
+              <svg className="absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 180 18" fill="none" aria-hidden="true">
+                <path d="M3 12C47 3 111 3 177 10" stroke="#fff38a" strokeWidth="7" strokeLinecap="round" />
+              </svg>
+            </span>{" "}
+            Say
             <br className="sm:hidden" /> About Us
           </h2>
         </div>

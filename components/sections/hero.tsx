@@ -25,7 +25,7 @@ const cityOptions = [
 ] as const;
 
 const searchWords = ["area", "city", "property", "university"];
-const heroWords = ["Room", "Apartment", "House", "Shared Room"];
+const heroWords = ["Room", "Apartment", "House"];
 
 export function Hero() {
   const router = useRouter();
@@ -35,6 +35,7 @@ export function Hero() {
   const [comingSoonCity, setComingSoonCity] = useState<string | null>(null);
   const [heroWordIndex, setHeroWordIndex] = useState(0);
   const typedWord = useTypingWords(searchWords);
+  const heroWord = heroWords[heroWordIndex] ?? heroWords[0];
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -96,14 +97,14 @@ export function Hero() {
               <span className="relative inline-flex max-w-full overflow-hidden pb-2 align-baseline font-light text-[var(--primary)]">
                 <AnimatePresence mode="wait">
                   <motion.span
-                    key={heroWords[heroWordIndex]}
+                    key={heroWord}
                     className="inline-block"
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -30, opacity: 0 }}
                     transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {heroWords[heroWordIndex]}
+                    {heroWord}
                   </motion.span>
                 </AnimatePresence>
                 <svg className="absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 180 18" fill="none" aria-hidden="true">

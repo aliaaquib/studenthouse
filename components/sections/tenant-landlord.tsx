@@ -10,7 +10,7 @@ export function TenantLandlord() {
       <div className="pointer-events-none absolute right-[-120px] top-[-90px] hidden h-[360px] w-[640px] rotate-[35deg] rounded-[60px] bg-[#f6f5f1] opacity-80 lg:block" />
 
       <div className="section-frame relative">
-        <h2 className="perfect-room-heading mb-8 text-[30px] font-medium leading-[1.12] tracking-[-0.01em] sm:text-[38px] lg:hidden">
+        <h2 className="perfect-room-heading mb-8 text-[30px] font-medium leading-[1.2] tracking-[-0.01em] sm:text-[38px] lg:hidden">
           <span className="whitespace-nowrap">We Will Help You Find</span>
           <br />
           <span className="whitespace-nowrap">
