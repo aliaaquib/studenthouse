@@ -1,13 +1,60 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
-import { CalendarDays, GraduationCap, MapPin, Search, WalletCards } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Clock, GraduationCap, Map, MapPin, Search, X } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { MotionDiv } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { assets } from "@/lib/assets";
 import { properties } from "@/lib/data";
 import { PropertyCard } from "@/components/sections/property-card";
 
+const cityOptions = [
+  { name: "Jalal-Abad", status: "active" },
+  { name: "Bishkek", status: "coming-soon" },
+  { name: "Osh", status: "coming-soon" },
+  { name: "Karakol", status: "coming-soon" },
+  { name: "Kant", status: "coming-soon" },
+  { name: "Naryn", status: "coming-soon" },
+  { name: "Talas", status: "coming-soon" },
+  { name: "Batken", status: "coming-soon" }
+] as const;
+
 export function Hero() {
+  const router = useRouter();
+  const [selectedCity, setSelectedCity] = useState("Jalal-Abad");
+  const [query, setQuery] = useState("");
+  const [citiesOpen, setCitiesOpen] = useState(false);
+  const [comingSoonCity, setComingSoonCity] = useState<string | null>(null);
+
+  function handleCitySelect(city: string) {
+    const item = cityOptions.find((option) => option.name === city);
+    setCitiesOpen(false);
+    setSelectedCity(city);
+
+    if (item?.status === "coming-soon") {
+      setComingSoonCity(city);
+    } else {
+      setComingSoonCity(null);
+    }
+  }
+
+  function handleSearch(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+
+    if (selectedCity !== "Jalal-Abad") {
+      setComingSoonCity(selectedCity);
+      return;
+    }
+
+    const params = new URLSearchParams({ region: "Jalal-Abad" });
+    if (query.trim()) params.set("q", query.trim());
+    router.push(`/search?${params.toString()}`);
+  }
+
   return (
     <section className="relative bg-[var(--surface)] pb-16 md:pb-20 lg:min-h-[820px]">
       <div className="absolute right-0 top-0 hidden h-full w-[48%] overflow-hidden lg:block">
@@ -21,57 +68,94 @@ export function Hero() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--surface)] via-[color-mix(in_srgb,var(--surface)_72%,transparent)] to-transparent" />
       </div>
-      <div className="section-frame relative grid gap-12 pt-12 md:pt-16 lg:grid-cols-[560px_1fr] lg:pt-[76px]">
+      <div className="section-frame relative grid gap-12 pt-16 md:pt-16 lg:grid-cols-[560px_1fr] lg:pt-[76px]">
         <div>
           <MotionDiv initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-[12px] font-extrabold text-[var(--primary)] shadow-[var(--shadow-card)]">
+            <div className="mb-5 hidden items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-[12px] font-semibold text-[var(--primary)] shadow-[var(--shadow-card)] sm:inline-flex">
               <GraduationCap size={16} /> Verified student housing
             </div>
             <h1 className="text-h1 max-w-[680px] text-balance">Find Your Perfect Student Apartment</h1>
-            <p className="mt-5 max-w-[520px] text-[15px] font-semibold leading-[1.75] text-[var(--muted)] md:mt-7 md:text-[17px]">
-              Safe, affordable student housing near your university. Browse verified apartments, shared rooms, and student-friendly rentals.
-            </p>
           </MotionDiv>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 max-w-[760px] md:mt-10">
+            <div className="relative">
+              <div className="absolute left-4 top-4 hidden h-[78px] w-[calc(100%-32px)] rounded-full bg-black/10 blur-[20px] sm:block" />
+              <form className="relative grid min-h-[56px] grid-cols-[116px_1fr_48px] items-center overflow-visible rounded-full bg-white shadow-[0_14px_36px_rgba(15,39,35,0.10)] md:min-h-[64px] md:grid-cols-[170px_1fr_76px] dark:bg-[var(--card)]" onSubmit={handleSearch}>
+                <div className="relative min-w-0">
+                  <button type="button" className="focus-ring flex h-full min-h-[56px] w-full min-w-0 items-center gap-2 border-r border-[var(--border)] px-3 text-left text-[13px] font-medium transition hover:text-[var(--primary)] md:min-h-[64px] md:gap-3 md:px-5 md:text-[17px]" onClick={() => setCitiesOpen((value) => !value)} aria-expanded={citiesOpen} aria-label="Select city">
+                    <Map size={18} strokeWidth={1.9} className="shrink-0" />
+                    <span className="truncate">{selectedCity}</span>
+                    <ChevronDown className="ml-auto shrink-0" size={14} />
+                  </button>
+                  <AnimatePresence>
+                    {citiesOpen ? (
+                      <motion.div
+                        className="absolute left-0 top-[calc(100%+10px)] z-40 w-[240px] overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-2 shadow-[var(--shadow-float)] md:w-[260px]"
+                        initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                        transition={{ duration: 0.16 }}
+                      >
+                        {cityOptions.map((city) => (
+                          <button
+                            key={city.name}
+                            type="button"
+                            className="focus-ring flex w-full items-center justify-between gap-3 rounded-[16px] px-4 py-3 text-left text-[13px] font-medium transition hover:bg-[var(--surface)]"
+                            onClick={() => handleCitySelect(city.name)}
+                          >
+                            <span>{city.name}</span>
+                            {city.status === "coming-soon" ? <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface)] px-2 py-1 text-[10px] text-[var(--muted)]"><Clock size={11} /> Soon</span> : <span className="text-[10px] font-semibold text-[var(--primary)]">Active</span>}
+                          </button>
+                        ))}
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </div>
+                <label className="flex h-full min-h-[56px] min-w-0 items-center px-3 md:min-h-[64px] md:px-5">
+                  <Search className="mr-2 shrink-0 text-[var(--primary)] md:mr-3" size={16} />
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    className="h-full min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[var(--foreground)] outline-none placeholder:font-normal placeholder:text-[#9b9b9b] md:text-[19px]"
+                    placeholder="Search your student home"
+                    aria-label="Search your student home"
+                  />
+                </label>
+                <div className="flex justify-end pr-2 md:px-3">
+                  <button
+                    type="submit"
+                    aria-label="Search properties"
+                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_12px_32px_rgba(0,168,132,0.18)] transition hover:scale-105 hover:bg-[var(--primary-light)] dark:text-[#071411] md:h-[52px] md:w-[52px]"
+                  >
+                    <Search size={18} strokeWidth={2.1} className="md:size-6" />
+                  </button>
+                </div>
+              </form>
+              <AnimatePresence>
+                {comingSoonCity ? (
+                  <motion.div
+                    className="absolute left-0 right-0 top-[calc(100%+14px)] z-30 rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-float)]"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    role="status"
+                  >
+                    <button type="button" className="focus-ring absolute right-3 top-3 rounded-full p-1 text-[var(--muted)] hover:bg-[var(--surface)]" onClick={() => setComingSoonCity(null)} aria-label="Close city availability message">
+                      <X size={16} />
+                    </button>
+                    <p className="pr-7 text-[14px] font-semibold">{comingSoonCity} is launching soon.</p>
+                    <p className="mt-1 text-[13px] font-normal leading-[1.6] text-[var(--muted)]">Apartments are currently available only in Jalal-Abad. We&apos;re expanding to more cities across Kyrgyzstan soon.</p>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          </div>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
               <Link href="/properties">Browse Apartments</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/universities">Explore Universities</Link>
             </Button>
-          </div>
-          <div className="mt-9 grid gap-4 sm:grid-cols-3 md:mt-11">
-            {[
-              ["15,000+", "Students Housed"],
-              ["3,200+", "Verified Apartments"],
-              ["850+", "Trusted Landlords"]
-            ].map(([value, label]) => (
-              <div key={label} className="rounded-[16px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-card)]">
-                <p className="text-[22px] font-extrabold leading-[1.2] text-[var(--primary)]">{value}</p>
-                <p className="mt-1 text-[12px] font-bold leading-[1.5] text-[var(--muted)]">{label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-10 max-w-[880px] md:mt-12">
-            <div className="relative">
-              <div className="absolute left-0 top-4 h-[120px] w-full rounded-[24px] bg-[var(--primary)] opacity-10 blur-[28px]" />
-              <div className="relative grid gap-4 rounded-[24px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-card-hover)] md:grid-cols-[1.2fr_1fr_0.9fr_0.95fr_auto] md:items-center">
-                {[
-                  ["University or City", "JAIU, Jalal-Abad", <Search key="search" size={17} />],
-                  ["Move-in Date", "August 2026", <CalendarDays key="calendar" size={17} />],
-                  ["Budget", "Under 15,000 KGS", <WalletCards key="budget" size={17} />],
-                  ["Room Type", "Shared or studio", <GraduationCap key="room" size={17} />]
-                ].map(([label, value, icon]) => (
-                  <div key={String(label)} className="min-w-0 rounded-[16px] bg-[var(--surface)] px-4 py-3">
-                    <p className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-[0.04em] text-[var(--muted)]">{icon}{label}</p>
-                    <p className="mt-1 truncate text-[14px] font-extrabold leading-[1.45]">{value}</p>
-                  </div>
-                ))}
-                <Button asChild size="lg" className="w-full md:w-auto">
-                  <Link href="/search">Search</Link>
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
         <MotionDiv

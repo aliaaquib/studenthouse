@@ -7,7 +7,7 @@ export type Property = {
   priceMonthly: number;
   location: string;
   city: string;
-  region: "Jalal-Abad" | "Manas";
+  region: "Jalal-Abad";
   university: string;
   distance: string;
   roommates: number;
@@ -36,7 +36,7 @@ export type PropertyFilters = {
   utilities: "Any" | "Included" | "Separate";
   genderPreference: "Any" | "Female only" | "Male only" | "Mixed";
   university: "Any" | string;
-  region: "Any" | "Jalal-Abad" | "Manas";
+  region: "Any" | "Jalal-Abad";
 };
 
 export type Agent = {

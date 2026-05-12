@@ -1,79 +1,76 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BadgeCheck, MessageCircle, PlayCircle, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BadgePercent, ShieldCheck } from "lucide-react";
 import { assets } from "@/lib/assets";
-import { universities } from "@/lib/data";
-
-const trustItems = [
-  { label: "Secure chat", icon: MessageCircle },
-  { label: "Verified landlords", icon: ShieldCheck }
-];
 
 export function TenantLandlord() {
   return (
-    <section className="bg-[var(--background)] py-16 md:py-20">
-      <div className="section-frame grid items-center gap-12 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="relative h-[560px] max-w-[660px] md:h-[620px]">
-          <div className="absolute left-0 top-0 h-[500px] w-full overflow-hidden rounded-[24px] border border-[var(--border)] bg-[var(--surface)] md:h-[580px] xl:w-[560px]">
+    <section className="relative overflow-hidden bg-[var(--background)] py-10 md:py-20 lg:py-24">
+      <div className="pointer-events-none absolute -right-40 top-2 h-[520px] w-[440px] rotate-[28deg] rounded-[70px] bg-[#f6f5f1] opacity-70 lg:hidden" />
+      <div className="pointer-events-none absolute -right-24 top-0 hidden h-[720px] w-[760px] rounded-[48%] border-[72px] border-[#f4f3ef] opacity-85 lg:block" />
+      <div className="pointer-events-none absolute right-[-120px] top-[-90px] hidden h-[360px] w-[640px] rotate-[35deg] rounded-[60px] bg-[#f6f5f1] opacity-80 lg:block" />
+
+      <div className="section-frame relative">
+        <h2 className="perfect-room-heading mb-8 text-[30px] font-bold leading-[1.12] tracking-[-0.01em] sm:text-[38px] lg:hidden">
+          <span className="whitespace-nowrap">We Will Help You Find</span>
+          <br />
+          <span className="whitespace-nowrap">
+            Your{" "}
+            <span className="relative inline-block text-[var(--primary)]">
+              Perfect Room!
+              <span className="absolute -bottom-2 left-0 h-1.5 w-[72%] rounded-full bg-[#fff38a]" />
+            </span>
+          </span>
+        </h2>
+        <div className="grid grid-cols-12 gap-4 md:gap-6 lg:grid-cols-[420px_1fr_0.86fr] lg:grid-rows-[auto_auto] lg:items-start lg:gap-8 xl:grid-cols-[500px_1fr_0.86fr]">
+          <div className="hidden lg:col-start-1 lg:row-start-1 lg:block">
+            <h2 className="perfect-room-heading max-w-[500px] text-[30px] font-bold leading-[1.12] tracking-[-0.01em] sm:text-[38px] lg:text-[38px] xl:text-[44px]">
+              <span className="whitespace-nowrap">We Will Help You Find</span>
+              <br />
+              <span className="whitespace-nowrap">
+                Your{" "}
+                <span className="relative inline-block text-[var(--primary)]">
+                  Perfect Room!
+                  <span className="absolute -bottom-3 left-0 h-2 w-[72%] rounded-full bg-[#fff38a]" />
+                </span>
+              </span>
+            </h2>
+          </div>
+
+          <div className="col-span-8 col-start-1 row-start-1 rounded-[34px] bg-[#e4e0ff] p-6 text-[#2c2d34] shadow-[0_18px_54px_rgba(109,99,238,0.12)] sm:p-8 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:rounded-[30px] lg:p-10">
+            <ShieldCheck className="text-[#6f63ee]" size={38} strokeWidth={2.2} />
+            <h3 className="mt-7 text-[22px] font-semibold leading-[1.16] sm:text-[26px] lg:mt-6 lg:whitespace-nowrap lg:text-[22px]">Perfect Home Guarantee</h3>
+            <p className="mt-5 text-[18px] font-light leading-[1.55] text-[#56515f] sm:text-[22px] lg:mt-4 lg:text-[16px] lg:leading-[1.65]">
+              We work with only trusted partners to give you peace of mind during your stay at your home away from home.
+            </p>
+          </div>
+
+          <div className="relative col-span-4 col-start-9 row-start-1 min-h-[300px] overflow-hidden rounded-[30px] bg-[var(--surface)] shadow-[var(--shadow-card)] sm:min-h-[420px] lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:min-h-[300px]">
             <Image
-              src={assets.tenantHome}
-              alt="Student apartment building exterior"
+              src={assets.heroSmallAlt}
+              alt="Student relaxing with laptop in a bright room"
               fill
-              sizes="(min-width: 1280px) 544px, 100vw"
-              className="object-cover object-center"
+              sizes="(min-width: 1024px) 360px, 100vw"
+              className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/28 to-transparent" />
           </div>
-          <div className="absolute left-3 top-8 flex min-h-24 w-[min(410px,calc(100%-24px))] items-center gap-4 rounded-[18px] border border-[var(--border)] bg-[var(--card)] px-5 shadow-[var(--shadow-card)] md:h-28 md:gap-6 md:px-8">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)] md:h-16 md:w-16">
-              <PlayCircle size={28} />
-            </span>
-            <span>
-              <strong className="block text-[16px] leading-[1.6] text-[var(--secondary)]">Virtual room tours</strong>
-              <span className="text-[13px] font-semibold leading-[1.6] text-[var(--muted)]">Preview rooms before you arrive</span>
-            </span>
+
+          <div className="col-span-8 col-start-5 row-start-2 rounded-[34px] bg-[#ffd83d] p-6 text-[#29313a] shadow-[0_18px_48px_rgba(226,177,18,0.16)] sm:p-8 lg:col-span-1 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:rounded-[30px] lg:p-10">
+            <BadgePercent className="text-[#285f5b]" size={38} strokeWidth={2.2} />
+            <h3 className="mt-7 text-[22px] font-semibold leading-[1.16] sm:text-[26px] lg:mt-8 lg:text-[22px]">Price Match Promise</h3>
+            <p className="mt-5 text-[18px] font-light leading-[1.55] text-[#4f5360] sm:text-[22px] lg:mt-4 lg:text-[16px] lg:leading-[1.65]">
+              If you find your choice of housing available at a lower price, we will match that price at your time of booking.
+            </p>
           </div>
-          <div className="absolute bottom-0 left-4 flex min-h-24 w-[min(430px,calc(100%-32px))] items-center rounded-[18px] border border-[var(--border)] bg-[var(--card)] px-5 shadow-[var(--shadow-card)] md:left-[160px] md:h-28 md:px-8">
-            <span>
-              <strong className="block text-[16px] leading-[1.6] text-[var(--secondary)]">Verified student-safe listings</strong>
-              <span className="text-[13px] font-semibold leading-[1.6] text-[var(--muted)]">Scam protection and trusted reviews</span>
-            </span>
-            <span className="absolute -top-7 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white md:-top-8 md:right-8 md:h-16 md:w-16 dark:text-[#071411]">
-              <BadgeCheck size={28} />
-            </span>
+
+          <div className="relative col-span-4 col-start-1 row-start-2 min-h-[300px] overflow-hidden rounded-[30px] bg-[var(--surface)] shadow-[var(--shadow-card)] sm:min-h-[420px] lg:col-span-1 lg:col-start-2 lg:row-start-2 lg:mt-8 lg:min-h-[300px]">
+            <Image
+              src={assets.heroSmall}
+              alt="Student comparing housing options on a tablet"
+              fill
+              sizes="(min-width: 1024px) 360px, 100vw"
+              className="object-cover"
+            />
           </div>
-        </div>
-        <div>
-          <div className="inline-flex rounded-full border border-[var(--border)] bg-[var(--surface)] p-1 text-[13px] font-extrabold text-[var(--muted)]">
-            <span className="rounded-full bg-[var(--card)] px-4 py-2 text-[var(--primary)] shadow-[var(--shadow-card)]">Students</span>
-            <span className="px-4 py-2">Landlords</span>
-          </div>
-          <h2 className="text-h2 mt-8 max-w-[560px]">Browse by university and move closer to campus.</h2>
-          <p className="mt-5 max-w-[520px] text-[15px] font-semibold leading-[1.75] text-[var(--muted)]">
-            Compare apartment counts, average rent, and nearby listings around your university before you message a landlord.
-          </p>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {universities.map((item) => (
-              <Link key={item.slug} href={`/universities#${item.slug}`} className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-card)] transition hover:-translate-y-1 hover:border-[var(--primary)]">
-                <span className="text-[15px] font-extrabold">{item.name}</span>
-                <span className="mt-2 block text-[13px] font-semibold text-[var(--muted)]">{item.apartmentCount} apartments · avg {item.averageRent}</span>
-              </Link>
-            ))}
-          </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {trustItems.map(({ label, icon: Icon }) => (
-              <div key={label} className="flex items-center gap-3 text-[14px] font-extrabold text-[var(--muted-strong)]">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)]"><Icon size={19} /></span>
-                {label}
-              </div>
-            ))}
-          </div>
-          <Button asChild className="mt-8">
-            <Link href="/auth/signup">
-              Find housing near campus <ArrowRight size={20} />
-            </Link>
-          </Button>
         </div>
       </div>
     </section>

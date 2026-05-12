@@ -1,4 +1,5 @@
 import { Benefit } from "@/components/sections/benefit";
+import { CollegePartners } from "@/components/sections/college-partners";
 import { CTA } from "@/components/sections/cta";
 import { Footer } from "@/components/sections/footer";
 import { Header } from "@/components/sections/header";
@@ -13,9 +14,10 @@ export default function HomePage() {
       <Header />
       <main>
         <Hero />
-        <TenantLandlord />
-        <Benefit />
         <Listings />
+        <CollegePartners />
+        <Benefit />
+        <TenantLandlord />
         <Testimonials />
         <CTA />
       </main>

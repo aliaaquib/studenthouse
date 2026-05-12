@@ -59,10 +59,10 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
               <span className="text-[14px] font-medium text-[var(--muted)]">/month</span>
             </p>
             <h1 className="mt-2 text-h2">{property.name}</h1>
-            <p className="mt-3 flex items-center gap-2 text-[15px] font-semibold text-[var(--muted)]">
+            <p className="mt-3 flex items-center gap-2 text-[15px] font-normal text-[var(--muted)]">
               <MapPin size={18} /> {property.location} · {property.distance}
             </p>
-            <p className="mt-2 text-[13px] font-extrabold text-[var(--muted)]">Property ID: {property.id} · Available {property.availabilityDate}</p>
+            <p className="mt-2 text-[13px] font-medium text-[var(--muted)]">Property ID: {property.id} · Available {property.availabilityDate}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
             <Button type="button" variant="outline" onClick={() => toggleSaved(property.id)}>
@@ -76,22 +76,22 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
           </div>
         </div>
         <div className="mt-8 grid gap-4 border-y border-[var(--border)] py-6 sm:grid-cols-4">
-          <span className="flex items-center gap-3 text-[14px] font-extrabold"><Users color="var(--primary)" /> {property.roommates} roommates</span>
-          <span className="flex items-center gap-3 text-[14px] font-extrabold"><Sofa color="var(--primary)" /> {property.furnished ? "Furnished" : "Unfurnished"}</span>
-          <span className="flex items-center gap-3 text-[14px] font-extrabold"><Wifi color="var(--primary)" /> {property.utilitiesIncluded ? "Bills included" : "Bills separate"}</span>
-          <span className="flex items-center gap-3 text-[14px] font-extrabold"><BadgeCheck color="var(--primary)" /> Verified</span>
+          <span className="flex items-center gap-3 text-[14px] font-medium"><Users color="var(--primary)" /> {property.roommates} roommates</span>
+          <span className="flex items-center gap-3 text-[14px] font-medium"><Sofa color="var(--primary)" /> {property.furnished ? "Furnished" : "Unfurnished"}</span>
+          <span className="flex items-center gap-3 text-[14px] font-medium"><Wifi color="var(--primary)" /> {property.utilitiesIncluded ? "Bills included" : "Bills separate"}</span>
+          <span className="flex items-center gap-3 text-[14px] font-medium"><BadgeCheck color="var(--primary)" /> Verified</span>
         </div>
-        <p className="mt-8 max-w-[760px] text-[15px] font-semibold leading-[1.75] text-[var(--muted)]">{property.description}</p>
+        <p className="mt-8 max-w-[760px] text-[15px] font-normal leading-[1.75] text-[var(--muted)]">{property.description}</p>
         <div className="mt-6 flex flex-wrap gap-2">
           {property.badges.map((badge) => (
-            <span key={badge} className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-[12px] font-extrabold text-[var(--muted-strong)]">{badge}</span>
+            <span key={badge} className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted-strong)]">{badge}</span>
           ))}
         </div>
         <div className="mt-10 rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
           <h2 className="text-[20px] font-extrabold leading-[1.35]">Amenities</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {property.amenities.map((amenity) => (
-              <span key={amenity} className="rounded-[14px] bg-[var(--surface)] px-4 py-3 text-[13px] font-extrabold text-[var(--muted-strong)]">{amenity}</span>
+              <span key={amenity} className="rounded-[14px] bg-[var(--surface)] px-4 py-3 text-[13px] font-medium text-[var(--muted-strong)]">{amenity}</span>
             ))}
           </div>
         </div>
@@ -103,8 +103,8 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
               return (
                 <div key={item.title} className="rounded-[16px] bg-[var(--surface)] p-4">
                   <Icon color="var(--primary)" />
-                  <strong className="mt-3 block text-[14px] font-extrabold">{item.title}</strong>
-                  <span className="mt-1 block text-[12px] font-semibold leading-[1.6] text-[var(--muted)]">{item.copy}</span>
+                  <strong className="mt-3 block text-[14px] font-semibold">{item.title}</strong>
+                  <span className="mt-1 block text-[12px] font-normal leading-[1.6] text-[var(--muted)]">{item.copy}</span>
                 </div>
               );
             })}
@@ -112,7 +112,7 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
         </div>
         <div className="mt-10 rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-6">
           <h2 className="text-[20px] font-extrabold leading-[1.35]">Nearby university</h2>
-          <p className="mt-3 text-[15px] font-semibold leading-[1.7] text-[var(--muted)]">
+          <p className="mt-3 text-[15px] font-normal leading-[1.7] text-[var(--muted)]">
             {property.university} is {property.distance.toLowerCase()}, with student-friendly transit, grocery access, and verified landlord support nearby.
           </p>
         </div>
@@ -127,9 +127,9 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
       </div>
       <aside className="lg:sticky lg:top-28 lg:self-start">
         <div className="mb-5 rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
-          <p className="text-[13px] font-extrabold uppercase tracking-[0.06em] text-[var(--muted)]">Landlord</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">Landlord</p>
           <h2 className="mt-2 text-[20px] font-extrabold">{property.agent}</h2>
-          <p className="mt-2 text-[13px] font-semibold leading-[1.6] text-[var(--muted)]">Verified housing partner for {property.university} students.</p>
+          <p className="mt-2 text-[13px] font-normal leading-[1.6] text-[var(--muted)]">Verified housing partner for {property.university} students.</p>
         </div>
         <ContactForm title={`Ask about ${property.name}`} property={property} />
       </aside>

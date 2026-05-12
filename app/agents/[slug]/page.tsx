@@ -18,8 +18,8 @@ export default async function AgentPage({ params }: { params: Promise<{ slug: st
             </div>
             <div>
               <h1 className="text-h2">{agent.name}</h1>
-              <p className="mt-2 text-[15px] font-semibold text-[var(--muted)]">{agent.title} · {agent.location}</p>
-              <p className="mt-4 flex items-center gap-2 text-[15px] font-extrabold"><Star size={20} fill="var(--primary)" color="var(--primary)" /> {agent.rating} rating · {agent.deals} student placements</p>
+              <p className="mt-2 text-[15px] font-normal text-[var(--muted)]">{agent.title} · {agent.location}</p>
+              <p className="mt-4 flex items-center gap-2 text-[15px] font-medium"><Star size={20} fill="var(--primary)" color="var(--primary)" /> {agent.rating} rating · {agent.deals} student placements</p>
             </div>
           </div>
           <ContactForm title="Contact housing advisor" />

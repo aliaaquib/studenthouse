@@ -2,8 +2,7 @@ import { assets } from "@/lib/assets";
 import type { Agent, City, Property, Region, University } from "@/types/property";
 
 export const activeRegions: Region[] = [
-  { slug: "jalal-abad", name: "Jalal-Abad", status: "active" },
-  { slug: "manas", name: "Manas", status: "active" }
+  { slug: "jalal-abad", name: "Jalal-Abad", status: "active" }
 ];
 
 export const comingSoonRegions: Region[] = [
@@ -105,15 +104,15 @@ export const properties: Property[] = [
     description: "A calm private room for CAIMU medical students, with a study desk, reliable heating, and a verified host."
   },
   {
-    id: "STN-MAN-1004",
-    slug: "manas-campus-apartment",
-    title: "Manas Campus Apartment",
-    name: "Manas Campus Apartment",
+    id: "STN-JAB-1004",
+    slug: "jaiu-campus-apartment",
+    title: "JAIU Campus Apartment",
+    name: "JAIU Campus Apartment",
     price: "25,000 сом",
     priceMonthly: 25000,
-    location: "Manas Student Quarter",
-    city: "Manas",
-    region: "Manas",
+    location: "Kurmanbek Street, Jalal-Abad",
+    city: "Jalal-Abad",
+    region: "Jalal-Abad",
     university: "Jalal-Abad International University (JAIU)",
     distance: "12 mins by shuttle to JAIU",
     roommates: 3,
@@ -130,7 +129,7 @@ export const properties: Property[] = [
     type: "Apartment",
     agent: "Nora Blake",
     landlordPhone: "+996555011697",
-    description: "A spacious student apartment in the Manas region with a virtual tour, shared kitchen, laundry access, and shuttle routes."
+    description: "A spacious Jalal-Abad student apartment with a virtual tour, shared kitchen, laundry access, and shuttle routes."
   },
   {
     id: "STN-JAB-1005",
@@ -161,15 +160,15 @@ export const properties: Property[] = [
     description: "A budget-friendly shared room for JASU students who want a simple verified place close to class and everyday food spots."
   },
   {
-    id: "STN-MAN-1006",
-    slug: "manas-exchange-house",
-    title: "Manas Exchange House",
-    name: "Manas Exchange House",
+    id: "STN-JAB-1006",
+    slug: "caimu-exchange-house",
+    title: "CAIMU Exchange House",
+    name: "CAIMU Exchange House",
     price: "14,000 сом",
     priceMonthly: 14000,
-    location: "Central Manas",
-    city: "Manas",
-    region: "Manas",
+    location: "Central Jalal-Abad",
+    city: "Jalal-Abad",
+    region: "Jalal-Abad",
     university: "Central Asian International Medical University (CAIMU)",
     distance: "18 mins by shuttle to CAIMU",
     roommates: 4,
@@ -186,14 +185,14 @@ export const properties: Property[] = [
     type: "Shared Room",
     agent: "Aida Karimova",
     landlordPhone: "+996555011697",
-    description: "A friendly Manas-region house for exchange and medical students, with flexible move-in dates and verified landlord support."
+    description: "A friendly Jalal-Abad house for exchange and medical students, with flexible move-in dates and verified landlord support."
   }
 ];
 
 export const agents: Agent[] = [
   { slug: "aida-karimova", name: "Aida Karimova", title: "Student Housing Advisor", location: "Jalal-Abad", rating: 4.9, deals: 184 },
   { slug: "daniel-reyes", name: "Daniel Reyes", title: "International Student Host", location: "Jalal-Abad", rating: 4.8, deals: 136 },
-  { slug: "ava-sullivan", name: "Ava Sullivan", title: "Verified Landlord Partner", location: "Manas", rating: 4.9, deals: 207 }
+  { slug: "ava-sullivan", name: "Ava Sullivan", title: "Verified Landlord Partner", location: "Jalal-Abad", rating: 4.9, deals: 207 }
 ];
 
 export const universities: University[] = [
@@ -204,7 +203,6 @@ export const universities: University[] = [
 
 export const cities: City[] = [
   { slug: "jalal-abad", name: "Jalal-Abad", count: 388, averageRent: "14,800 сом", status: "active" },
-  { slug: "manas", name: "Manas", count: 74, averageRent: "17,200 сом", status: "active" },
   { slug: "bishkek", name: "Bishkek", count: 0, averageRent: "Soon", status: "coming-soon" },
   { slug: "osh", name: "Osh", count: 0, averageRent: "Soon", status: "coming-soon" },
   { slug: "kant", name: "Kant", count: 0, averageRent: "Soon", status: "coming-soon" },

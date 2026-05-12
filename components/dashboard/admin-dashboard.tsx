@@ -67,8 +67,8 @@ const propertySchema = z.object({
   priceMonthly: z.coerce.number().min(1000, "Monthly rent must be at least 1,000 KGS"),
   description: z.string().min(20, "Description needs more detail"),
   location: z.string().min(3, "Location is required"),
-  city: z.enum(["Jalal-Abad", "Manas"]),
-  region: z.enum(["Jalal-Abad", "Manas"]),
+  city: z.literal("Jalal-Abad"),
+  region: z.literal("Jalal-Abad"),
   university: z.string().min(3, "Nearby university is required"),
   distance: z.string().min(2, "Distance is required"),
   roomType: z.enum(["Studio", "Private room", "Shared room", "Apartment"]),
@@ -330,7 +330,7 @@ export function AdminDashboard({
             <div>
               <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-[var(--primary)]">Secure admin workspace</p>
               <h2 className="mt-1 text-[28px] font-extrabold leading-[1.2]">Student housing management</h2>
-              <p className="mt-2 text-[14px] font-semibold text-[var(--muted)]">Manage KGS pricing, Jalal-Abad and Manas listings, universities, inquiries, regions, and homepage visibility.</p>
+              <p className="mt-2 text-[14px] font-semibold text-[var(--muted)]">Manage KGS pricing, Jalal-Abad listings, universities, inquiries, regions, and homepage visibility.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" onClick={() => setSection("properties")}><ListChecks size={17} /> Manage listings</Button>
@@ -389,7 +389,7 @@ export function AdminDashboard({
 }
 
 function OverviewSection({ stats, properties }: { stats: { label: string; value: string; icon: typeof Home }[]; properties: AdminProperty[] }) {
-  const activity = ["JAIU Riverside Studio marked featured", "New CAIMU inquiry received", "Manas region availability updated", "JASU rent changed to KGS"];
+  const activity = ["JAIU Riverside Studio marked featured", "New CAIMU inquiry received", "Jalal-Abad availability updated", "JASU rent changed to KGS"];
   const chart = ["h-20", "h-28", "h-16", "h-32", "h-24", "h-36"];
 
   return (
@@ -522,10 +522,10 @@ function PropertyForm({ property, universities, onSubmit }: { property?: AdminPr
           <option>Studio</option><option>Private room</option><option>Shared room</option><option>Apartment</option>
         </select>
         <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="City" {...form.register("city")}>
-          <option>Jalal-Abad</option><option>Manas</option>
+          <option>Jalal-Abad</option>
         </select>
         <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="Region" {...form.register("region")}>
-          <option>Jalal-Abad</option><option>Manas</option>
+          <option>Jalal-Abad</option>
         </select>
         <Input type="number" placeholder="Roommate count" aria-label="Roommate count" {...form.register("roommates")} />
         <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="Gender preference" {...form.register("genderPreference")}>

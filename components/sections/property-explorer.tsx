@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { MapPin, SearchX } from "lucide-react";
 import { motion } from "framer-motion";
 import { PropertyCard } from "@/components/sections/property-card";
@@ -30,6 +31,8 @@ export function PropertyExplorer({
   limit?: number;
   initialFilters?: PropertyFiltersValue;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [filters, setFilters] = useState<PropertyFiltersValue>(initialFilters);
   const [resetKey, setResetKey] = useState(0);
   const [isPending, startTransition] = useTransition();
@@ -40,9 +43,26 @@ export function PropertyExplorer({
     startTransition(() => setFilters(nextFilters));
   }, [startTransition]);
 
+  const syncSearchUrl = useCallback((nextFilters: PropertyFiltersValue) => {
+    const params = new URLSearchParams();
+    if (nextFilters.query.trim()) params.set("q", nextFilters.query.trim());
+    if (nextFilters.region !== "Any") params.set("region", nextFilters.region);
+    if (nextFilters.roomType !== "Any") params.set("roomType", nextFilters.roomType);
+    if (nextFilters.budget !== "Any") params.set("budget", nextFilters.budget);
+    if (nextFilters.university !== "Any") params.set("university", nextFilters.university);
+    if (nextFilters.furnished !== "Any") params.set("furnished", nextFilters.furnished);
+    if (nextFilters.utilities !== "Any") params.set("utilities", nextFilters.utilities);
+    if (nextFilters.genderPreference !== "Any") params.set("genderPreference", nextFilters.genderPreference);
+
+    const nextPath = pathname === "/search" ? "/search" : "/properties";
+    const queryString = params.toString();
+    router.push(queryString ? `${nextPath}?${queryString}` : nextPath);
+  }, [pathname, router]);
+
   function clearFilters() {
     setResetKey((value) => value + 1);
     handleFiltersChange(defaultFilters);
+    syncSearchUrl(defaultFilters);
   }
 
   const grid = (
@@ -53,6 +73,7 @@ export function PropertyExplorer({
         activeRegions={activeRegions}
         comingSoonRegions={comingSoonRegions}
         onFiltersChange={handleFiltersChange}
+        onSearchSubmit={syncSearchUrl}
         initialFilters={filters}
       />
       {isPending ? (
@@ -78,7 +99,7 @@ export function PropertyExplorer({
         <div className="mt-8 rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-[var(--shadow-card)]">
           <SearchX className="mx-auto text-[var(--primary)]" size={34} />
           <h2 className="mt-4 text-[22px] font-extrabold">No apartments found</h2>
-          <p className="mx-auto mt-2 max-w-[420px] text-[14px] font-semibold leading-[1.7] text-[var(--muted)]">
+          <p className="mx-auto mt-2 max-w-[420px] text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
             Try a different university, budget, room type, or roommate preference.
           </p>
           <Button className="mt-5" variant="outline" onClick={clearFilters}>Clear filters</Button>

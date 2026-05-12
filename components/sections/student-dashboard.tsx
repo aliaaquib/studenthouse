@@ -46,12 +46,12 @@ export function StudentDashboard({ properties }: { properties: Property[] }) {
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
             <h2 className="flex items-center gap-2 text-[18px] font-extrabold"><Search size={18} color="var(--primary)" /> Recent searches</h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              {recentSearches.map((item) => <span key={item} className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-[12px] font-extrabold text-[var(--muted-strong)]">{item}</span>)}
+              {recentSearches.map((item) => <span key={item} className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted-strong)]">{item}</span>)}
             </div>
           </div>
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
             <h2 className="flex items-center gap-2 text-[18px] font-extrabold"><MessageSquare size={18} color="var(--primary)" /> Inquiry history</h2>
-            <ul className="mt-4 space-y-3 text-[13px] font-semibold text-[var(--muted)]">
+            <ul className="mt-4 space-y-3 text-[13px] font-normal text-[var(--muted)]">
               {inquiryHistory.map((item) => <li key={item}>{item}</li>)}
             </ul>
           </div>
@@ -66,7 +66,7 @@ export function StudentDashboard({ properties }: { properties: Property[] }) {
             <h2 className="text-[18px] font-extrabold">Viewed properties</h2>
             <div className="mt-4 grid gap-3">
               {viewedProperties.map((property) => (
-                <Link key={property.id} href={`/properties/${property.slug}`} className="rounded-[14px] bg-[var(--surface)] p-3 text-[13px] font-extrabold hover:text-[var(--primary)]">
+                <Link key={property.id} href={`/properties/${property.slug}`} className="rounded-[14px] bg-[var(--surface)] p-3 text-[13px] font-medium hover:text-[var(--primary)]">
                   {property.title}
                 </Link>
               ))}

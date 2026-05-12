@@ -18,22 +18,24 @@ const filterSchema = z.object({
   utilities: z.enum(["Any", "Included", "Separate"]),
   genderPreference: z.enum(["Any", "Female only", "Male only", "Mixed"]),
   university: z.string(),
-  region: z.enum(["Any", "Jalal-Abad", "Manas"])
+  region: z.enum(["Any", "Jalal-Abad"])
 });
 
-const selectClassName = "focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold";
+const selectClassName = "focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-normal";
 
 export function PropertyFilters({
   universities,
   activeRegions,
   comingSoonRegions,
   onFiltersChange,
+  onSearchSubmit,
   initialFilters = defaultFilters
 }: {
   universities: string[];
   activeRegions: Region[];
   comingSoonRegions: Region[];
   onFiltersChange: (filters: PropertyFiltersValue) => void;
+  onSearchSubmit?: (filters: PropertyFiltersValue) => void;
   initialFilters?: PropertyFiltersValue;
 }) {
   const form = useForm<PropertyFiltersValue>({
@@ -54,7 +56,10 @@ export function PropertyFilters({
   return (
     <form
       className="grid gap-4 rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-card)] md:grid-cols-2 xl:grid-cols-[1.2fr_150px_150px_150px]"
-      onSubmit={form.handleSubmit(onFiltersChange)}
+      onSubmit={form.handleSubmit((values) => {
+        onFiltersChange(values);
+        onSearchSubmit?.(values);
+      })}
     >
       <Input aria-label="Search by city, university, or apartment title" placeholder="City, university, or apartment title" {...form.register("query")} />
       <select aria-label="Budget" className={selectClassName} {...form.register("budget")}>

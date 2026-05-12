@@ -145,6 +145,65 @@ textarea {
   box-shadow: 0 0 0 4px var(--ring);
 }
 
+.nav-link-active {
+  color: var(--primary);
+}
+
+.college-partners-marquee {
+  animation: college-partners-scroll-left 28s linear infinite;
+}
+
+.college-partners-title {
+  color: #000000;
+}
+
+.dark .college-partners-title {
+  color: #ffffff;
+}
+
+.perfect-room-heading {
+  color: #000000;
+}
+
+.dark .perfect-room-heading {
+  color: #ffffff;
+}
+
+.reviews-marquee-left {
+  animation: reviews-scroll-left 34s linear infinite;
+}
+
+.reviews-marquee-right {
+  animation: reviews-scroll-right 34s linear infinite;
+}
+
+@keyframes college-partners-scroll-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes reviews-scroll-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes reviews-scroll-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 @media (max-width: 900px) {
   .section-frame {
     width: min(100% - 32px, 720px);

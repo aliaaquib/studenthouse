@@ -38,12 +38,12 @@ export function ComingSoonRegionCard({ city }: { city: City }) {
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(23,166,115,0.14),transparent_34%),linear-gradient(145deg,rgba(255,184,77,0.12),transparent)] transition duration-500 group-hover:scale-110" />
         <div className="relative flex h-full flex-col justify-between">
-          <span className="inline-flex w-max items-center gap-2 rounded-full bg-[var(--surface)] px-3 py-1.5 text-[11px] font-extrabold text-[var(--muted-strong)]">
+          <span className="inline-flex w-max items-center gap-2 rounded-full bg-[var(--surface)] px-3 py-1.5 text-[11px] font-medium text-[var(--muted-strong)]">
             <LockKeyhole size={13} /> Coming Soon
           </span>
           <span>
             <h3 className="text-[22px] font-extrabold">{city.name}</h3>
-            <p className="mt-2 flex items-center gap-2 text-[13px] font-bold text-[var(--muted)]">
+            <p className="mt-2 flex items-center gap-2 text-[13px] font-normal text-[var(--muted)]">
               <Clock size={15} /> Launching soon
             </p>
           </span>
@@ -72,14 +72,14 @@ export function ComingSoonRegionCard({ city }: { city: City }) {
               <h2 id={`region-${city.slug}-title`} className="mt-5 text-[24px] font-extrabold leading-[1.2]">
                 Student housing in this region is launching soon.
               </h2>
-              <p className="mt-3 text-[14px] font-semibold leading-[1.7] text-[var(--muted)]">
+              <p className="mt-3 text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
                 We&apos;re currently expanding across Kyrgyzstan.
               </p>
               <form className="mt-6 grid gap-3" onSubmit={form.handleSubmit(handleNotify)}>
                 <Input type="email" aria-label={`Email for ${city.name} launch notifications`} placeholder="Enter your email" {...form.register("email")} />
                 <Button type="submit"><Mail size={17} /> Notify Me</Button>
               </form>
-              {form.formState.errors.email ? <p className="mt-2 text-[13px] font-semibold text-[var(--muted)]">{form.formState.errors.email.message}</p> : null}
+              {form.formState.errors.email ? <p className="mt-2 text-[13px] font-normal text-[var(--muted)]">{form.formState.errors.email.message}</p> : null}
               {sent ? <Toast className="mt-4">You&apos;ll be notified when {city.name} launches.</Toast> : null}
               <Button className="mt-4 w-full" variant="outline" type="button" onClick={() => setOpen(false)}>Close</Button>
             </motion.div>

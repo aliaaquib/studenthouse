@@ -13,15 +13,15 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://studentnest.example"),
-  title: "StudentNest | Student Housing in Jalal-Abad and Manas",
+  title: "StudentNest | Student Housing in Jalal-Abad",
   description:
-    "A modern student housing rental platform for verified apartments, shared rooms, roommates, and university accommodation in Jalal-Abad and Manas.",
+    "A modern student housing rental platform for verified apartments, shared rooms, roommates, and university accommodation in Jalal-Abad.",
   alternates: {
     canonical: "/"
   },
   openGraph: {
     title: "StudentNest",
-    description: "Find safe, affordable student housing near universities in Jalal-Abad and Manas.",
+    description: "Find safe, affordable student housing near universities in Jalal-Abad.",
     type: "website"
   },
   robots: {

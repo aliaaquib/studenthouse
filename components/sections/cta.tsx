@@ -22,11 +22,12 @@ export function CTA() {
   return (
     <section className="bg-[var(--primary)] py-16 text-center text-white">
       <div className="section-frame">
-        <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] opacity-80">Weekly housing alerts</p>
-        <h2 className="mx-auto mt-3 max-w-[620px] text-[26px] font-extrabold leading-[1.2] sm:text-[40px]">
-          Get the Latest Student Housing Updates
+        <p className="text-[13px] font-semibold uppercase tracking-[0.12em] opacity-80">Weekly housing alerts</p>
+        <h2 className="mx-auto mt-3 max-w-[620px] text-[26px] font-bold leading-[1.2] sm:text-[40px]">
+          Get the Latest Student
+          <br />
+          Housing Updates
         </h2>
-        <p className="mx-auto mt-4 max-w-[520px] text-[15px] font-semibold leading-[1.7] text-white/80">Discover affordable apartments and new listings near your university.</p>
         <form
           className="mx-auto mt-8 flex max-w-[560px] flex-col gap-3 rounded-[18px] bg-white p-3 shadow-[0_20px_60px_rgba(0,0,0,0.15)] sm:flex-row"
           onSubmit={form.handleSubmit(() => {
@@ -40,13 +41,13 @@ export function CTA() {
             className="border-0 text-[var(--foreground)] sm:h-12 sm:flex-1"
             {...form.register("email")}
           />
-          <Button type="submit" className="bg-[#10201c] hover:bg-[#1a332d] sm:w-[142px]">Subscribe</Button>
+          <Button type="submit" className="bg-[var(--primary)] text-white shadow-none hover:bg-[var(--primary-light)] sm:w-[142px]">Subscribe</Button>
         </form>
         {form.formState.errors.email ? (
           <p className="mt-2 text-[14px] font-medium text-white">{form.formState.errors.email.message}</p>
         ) : null}
         {subscribed ? <Toast className="mt-4 bg-white text-[#10201c]">You are subscribed to housing alerts.</Toast> : null}
-        <p className="mt-6 text-[14px] font-semibold text-white/80">Join 15,000+ students tracking verified housing near campus.</p>
+        <p className="mt-6 text-[14px] font-normal text-white/80">Join 15,000+ students tracking verified housing near campus.</p>
       </div>
     </section>
   );

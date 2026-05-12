@@ -11,7 +11,7 @@ export default function ContactPage() {
           <h2 className="text-h2 max-w-[620px]">Tell us what student housing you need.</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {["Verified landlords", "Virtual tours", "WhatsApp follow-up", "Roommate preferences"].map((item) => (
-              <div key={item} className="rounded-[18px] bg-[var(--card)] p-5 text-[14px] font-extrabold shadow-[var(--shadow-card)]">{item}</div>
+              <div key={item} className="rounded-[18px] bg-[var(--card)] p-5 text-[14px] font-medium shadow-[var(--shadow-card)]">{item}</div>
             ))}
           </div>
         </div>

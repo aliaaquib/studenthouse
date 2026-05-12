@@ -2,10 +2,27 @@ import { PageChrome, PageIntro } from "@/components/sections/page-chrome";
 import { PropertyExplorer } from "@/components/sections/property-explorer";
 import { defaultFilters } from "@/lib/property-utils";
 import { properties } from "@/lib/data";
+import type { PropertyFilters } from "@/types/property";
 
-export default async function SearchPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
-  const { type } = await searchParams;
-  const initialFilters = type === "shared" ? { ...defaultFilters, roomType: "Shared room" as const } : defaultFilters;
+function getInitialFilters(params: Partial<Record<keyof PropertyFilters | "type" | "city" | "q", string>>): PropertyFilters {
+  const region = params.region ?? params.city;
+  return {
+    ...defaultFilters,
+    query: params.q ?? "",
+    budget: params.budget === "Under 15,000 KGS" || params.budget === "15,000 - 22,000 KGS" || params.budget === "22,000+ KGS" ? params.budget : defaultFilters.budget,
+    roomType: params.type === "shared" ? "Shared room" : defaultFilters.roomType,
+    ...(params.roomType === "Studio" || params.roomType === "Private room" || params.roomType === "Shared room" || params.roomType === "Apartment" ? { roomType: params.roomType } : {}),
+    furnished: params.furnished === "Furnished" || params.furnished === "Unfurnished" ? params.furnished : defaultFilters.furnished,
+    utilities: params.utilities === "Included" || params.utilities === "Separate" ? params.utilities : defaultFilters.utilities,
+    genderPreference: params.genderPreference === "Female only" || params.genderPreference === "Male only" || params.genderPreference === "Mixed" ? params.genderPreference : defaultFilters.genderPreference,
+    university: params.university ?? defaultFilters.university,
+    region: region === "Jalal-Abad" ? region : defaultFilters.region
+  };
+}
+
+export default async function SearchPage({ searchParams }: { searchParams: Promise<Partial<Record<keyof PropertyFilters | "type" | "city" | "q", string>>> }) {
+  const params = await searchParams;
+  const initialFilters = getInitialFilters(params);
 
   return (
     <PageChrome>
