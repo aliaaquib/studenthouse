@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
+import { useTypingWords } from "@/hooks/use-typing-words";
 import { assets } from "@/lib/assets";
 
 const navItems = [
@@ -15,6 +16,8 @@ const navItems = [
   { label: "Add property", href: "/add-property" },
   { label: "Contact", href: "/contact" }
 ];
+
+const searchWords = ["area", "city", "property", "university"];
 
 export function Header() {
   const router = useRouter();
@@ -26,6 +29,7 @@ export function Header() {
   const [query, setQuery] = useState("");
   const scrollStopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isDark, toggleTheme } = useTheme();
+  const typedWord = useTypingWords(searchWords);
 
   useEffect(() => {
     function showAfterScrollStops() {
@@ -68,13 +72,18 @@ export function Header() {
         {searchOpen ? (
           <form className="flex h-11 min-w-0 w-full max-w-[620px] items-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-card)]" onSubmit={handleSearch}>
             <span className="hidden h-full shrink-0 items-center border-r border-[var(--border)] px-4 text-[13px] font-medium text-[var(--foreground)] sm:flex">Jalal-Abad</span>
-            <label className="flex min-w-0 flex-1 items-center px-3">
+            <label className="relative flex min-w-0 flex-1 items-center px-3">
               <Search size={16} className="mr-2 shrink-0 text-[var(--primary)]" />
+              {!query ? (
+                <span className="pointer-events-none absolute left-10 flex items-center gap-1 text-[13px] font-light text-[var(--muted)]">
+                  <span>Search by</span>
+                  <span className="search-typing-word">{typedWord}</span>
+                </span>
+              ) : null}
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-[14px] font-normal outline-none placeholder:text-[var(--muted)]"
-                placeholder="Search property"
+                className="relative z-10 min-w-0 flex-1 bg-transparent text-[14px] font-light outline-none"
                 aria-label="Search property"
                 autoFocus
               />

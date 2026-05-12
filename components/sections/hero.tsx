@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { assets } from "@/lib/assets";
 import { properties } from "@/lib/data";
 import { PropertyCard } from "@/components/sections/property-card";
+import { useTypingWords } from "@/hooks/use-typing-words";
 
 const cityOptions = [
   { name: "Jalal-Abad", status: "active" },
@@ -23,12 +24,15 @@ const cityOptions = [
   { name: "Batken", status: "coming-soon" }
 ] as const;
 
+const searchWords = ["area", "city", "property", "university"];
+
 export function Hero() {
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState("Jalal-Abad");
   const [query, setQuery] = useState("");
   const [citiesOpen, setCitiesOpen] = useState(false);
   const [comingSoonCity, setComingSoonCity] = useState<string | null>(null);
+  const typedWord = useTypingWords(searchWords);
 
   function handleCitySelect(city: string) {
     const item = cityOptions.find((option) => option.name === city);
@@ -79,8 +83,8 @@ export function Hero() {
           <div className="mt-8 max-w-[760px] md:mt-10">
             <div className="relative">
               <div className="absolute left-4 top-4 hidden h-[78px] w-[calc(100%-32px)] rounded-full bg-black/10 blur-[20px] sm:block" />
-              <form className="relative grid min-h-[56px] grid-cols-[116px_1fr_48px] items-center overflow-visible rounded-full bg-white shadow-[0_14px_36px_rgba(15,39,35,0.10)] md:min-h-[64px] md:grid-cols-[170px_1fr_76px] dark:bg-[var(--card)]" onSubmit={handleSearch}>
-                <div className="relative min-w-0">
+              <form className="relative grid min-h-[56px] grid-cols-[1fr_48px] items-center overflow-visible rounded-full bg-white shadow-[0_14px_36px_rgba(15,39,35,0.10)] md:min-h-[64px] md:grid-cols-[170px_1fr_76px] dark:bg-[var(--card)]" onSubmit={handleSearch}>
+                <div className="relative hidden min-w-0 md:block">
                   <button type="button" className="focus-ring flex h-full min-h-[56px] w-full min-w-0 items-center gap-2 border-r border-[var(--border)] px-3 text-left text-[13px] font-medium transition hover:text-[var(--primary)] md:min-h-[64px] md:gap-3 md:px-5 md:text-[17px]" onClick={() => setCitiesOpen((value) => !value)} aria-expanded={citiesOpen} aria-label="Select city">
                     <Map size={18} strokeWidth={1.9} className="shrink-0" />
                     <span className="truncate">{selectedCity}</span>
@@ -110,13 +114,17 @@ export function Hero() {
                     ) : null}
                   </AnimatePresence>
                 </div>
-                <label className="flex h-full min-h-[56px] min-w-0 items-center px-3 md:min-h-[64px] md:px-5">
-                  <Search className="mr-2 shrink-0 text-[var(--primary)] md:mr-3" size={16} />
+                <label className="relative flex h-full min-h-[56px] min-w-0 items-center px-4 md:min-h-[64px] md:px-5">
+                  {!query ? (
+                    <span className="pointer-events-none absolute left-4 flex items-center gap-1 text-[12px] font-light text-[#9b9b9b] md:left-5 md:text-[15px]">
+                      <span>Search by</span>
+                      <span className="search-typing-word">{typedWord}</span>
+                    </span>
+                  ) : null}
                   <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    className="h-full min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[var(--foreground)] outline-none placeholder:font-normal placeholder:text-[#9b9b9b] md:text-[19px]"
-                    placeholder="Search your student home"
+                    className="relative z-10 h-full min-w-0 flex-1 bg-transparent text-[12px] font-light text-[var(--foreground)] outline-none placeholder:font-light placeholder:text-[#9b9b9b] md:text-[15px]"
                     aria-label="Search your student home"
                   />
                 </label>

@@ -149,6 +149,28 @@ textarea {
   color: var(--primary);
 }
 
+.search-typing-word::after {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 2px;
+  background: currentColor;
+  transform: translateY(2px);
+  animation: search-caret-blink 900ms steps(2, start) infinite;
+}
+
+@keyframes search-caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .college-partners-marquee {
   animation: college-partners-scroll-left 28s linear infinite;
 }

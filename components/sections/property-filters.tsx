@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useTypingWords } from "@/hooks/use-typing-words";
 import { defaultFilters } from "@/lib/property-utils";
 import type { PropertyFilters as PropertyFiltersValue, Region } from "@/types/property";
 
@@ -22,6 +22,7 @@ const filterSchema = z.object({
 });
 
 const selectClassName = "focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-normal";
+const searchWords = ["area", "city", "property", "university"];
 
 export function PropertyFilters({
   universities,
@@ -43,6 +44,7 @@ export function PropertyFilters({
     defaultValues: initialFilters
   });
   const watchedValues = useWatch({ control: form.control });
+  const typedWord = useTypingWords(searchWords);
 
   useEffect(() => {
     onFiltersChange(filterSchema.parse(watchedValues));
@@ -61,7 +63,19 @@ export function PropertyFilters({
         onSearchSubmit?.(values);
       })}
     >
-      <Input aria-label="Search by city, university, or apartment title" placeholder="City, university, or apartment title" {...form.register("query")} />
+      <label className="focus-ring relative flex h-12 items-center rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4">
+        {!watchedValues.query ? (
+          <span className="pointer-events-none absolute flex items-center gap-1 text-[14px] font-light text-[var(--muted)]">
+            <span>Search by</span>
+            <span className="search-typing-word">{typedWord}</span>
+          </span>
+        ) : null}
+        <input
+          aria-label="Search by city, university, or apartment title"
+          className="relative z-10 h-full min-w-0 flex-1 bg-transparent text-[14px] font-light text-[var(--foreground)] outline-none"
+          {...form.register("query")}
+        />
+      </label>
       <select aria-label="Budget" className={selectClassName} {...form.register("budget")}>
         <option>Any</option>
         <option>Under 15,000 KGS</option>
