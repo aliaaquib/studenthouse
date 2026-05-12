@@ -132,9 +132,9 @@ export function Hero() {
                   <button
                     type="submit"
                     aria-label="Search properties"
-                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_12px_32px_rgba(0,168,132,0.18)] transition hover:scale-105 hover:bg-[var(--primary-light)] dark:text-[#071411] md:h-[52px] md:w-[52px]"
+                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_12px_32px_rgba(0,168,132,0.18)] transition hover:scale-105 hover:bg-[var(--primary-light)] md:h-[52px] md:w-[52px]"
                   >
-                    <Search size={18} strokeWidth={2.1} className="md:size-6" />
+                    <Search size={18} strokeWidth={1.5} className="text-white md:size-6" />
                   </button>
                 </div>
               </form>
@@ -158,8 +158,8 @@ export function Hero() {
             </div>
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
-              <Link href="/properties">Browse Apartments</Link>
+            <Button asChild size="lg" className="!text-white">
+              <Link href="/properties" className="!text-white">Browse Apartments</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/universities">Explore Universities</Link>
@@ -180,7 +180,7 @@ export function Hero() {
           </div>
           <div className="absolute right-[138px] top-[270px] flex h-16 w-14 items-center justify-center">
             <div className="absolute bottom-0 h-4 w-4 rounded-full bg-[var(--primary)]" />
-            <div className="absolute top-0 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.32)] dark:text-[#071411]">
+            <div className="absolute top-0 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.32)]">
               <GraduationCap size={24} />
             </div>
           </div>

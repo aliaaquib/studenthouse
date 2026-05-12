@@ -20,7 +20,7 @@ export function Listings() {
           <Link
             href="/properties"
             aria-label="Browse all apartments"
-            className="focus-ring mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#202328] text-[#202328] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+            className="focus-ring mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_12px_28px_rgba(23,166,115,0.22)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-light)]"
           >
             <ArrowRight size={22} />
           </Link>
@@ -28,7 +28,11 @@ export function Listings() {
 
         <div className="hidden flex-col gap-6 md:flex md:flex-row md:items-start md:justify-between">
           <div>
-            <h2 className="text-h2">Find Your Perfect College Home in Jalal-Abad</h2>
+            <h2 className="text-h2">
+              Find Your Perfect College Home
+              <br />
+              in Jalal-Abad
+            </h2>
           </div>
           <Button asChild size="lg">
             <Link href="/properties">Browse all apartments</Link>

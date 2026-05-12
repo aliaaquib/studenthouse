@@ -113,7 +113,7 @@ export function Benefit() {
       <div className="section-frame hidden overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--surface)] md:block">
         <div className="grid gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[420px_1fr] lg:px-12 lg:py-12">
           <div>
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)] text-white dark:text-[#071411]">
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)] text-white">
               <ShieldCheck size={24} />
             </div>
             <h2 className="text-h2 max-w-[430px] text-[var(--secondary)]">How to rent your first house</h2>

@@ -120,7 +120,7 @@ export function PropertyExplorer({
             <a
               key={property.id}
               href={`/properties/${property.slug}`}
-              className={`focus-ring absolute flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.3)] dark:text-[#071411] ${pinClasses[index]}`}
+              className={`focus-ring absolute flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.3)] ${pinClasses[index]}`}
               aria-label={`View ${property.title} on map`}
             >
               <MapPin size={20} />

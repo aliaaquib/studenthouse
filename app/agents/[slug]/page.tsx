@@ -13,7 +13,7 @@ export default async function AgentPage({ params }: { params: Promise<{ slug: st
       <section className="bg-[var(--surface)] py-16">
         <div className="section-frame grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="flex gap-6">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--primary)] text-[26px] font-bold text-white dark:text-[#071411]">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--primary)] text-[26px] font-bold text-white">
               {agent.name.split(" ").map((part) => part[0]).join("")}
             </div>
             <div>

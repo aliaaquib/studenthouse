@@ -30,7 +30,7 @@ export function PropertyCard({ property, compact = false, priority = false }: { 
         </div>
       </Link>
       {property.popular && !compact ? (
-        <div className="absolute left-4 top-4 flex h-8 items-center gap-1 rounded-full bg-[var(--primary)] px-3 text-[11px] font-semibold leading-4 tracking-[0.4px] text-white shadow-[0_10px_28px_rgba(23,166,115,0.22)] dark:text-[#071411]">
+        <div className="absolute left-4 top-4 flex h-8 items-center gap-1 rounded-full bg-[var(--primary)] px-3 text-[11px] font-semibold leading-4 tracking-[0.4px] text-white shadow-[0_10px_28px_rgba(23,166,115,0.22)]">
           <Sparkles size={13} fill="currentColor" /> STUDENT PICK
         </div>
       ) : null}
@@ -78,7 +78,7 @@ export function PropertyCard({ property, compact = false, priority = false }: { 
             href={getWhatsAppHref(property)}
             target="_blank"
             rel="noreferrer"
-            className="focus-ring mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--primary)] px-4 text-[13px] font-normal text-white transition hover:-translate-y-0.5 hover:bg-[var(--primary-light)] dark:text-[#071411]"
+            className="focus-ring mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--primary)] px-4 text-[13px] font-normal text-white transition hover:-translate-y-0.5 hover:bg-[var(--primary-light)]"
           >
             <MessageCircle size={17} /> Contact Landlord
           </a>

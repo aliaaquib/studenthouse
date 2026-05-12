@@ -316,7 +316,7 @@ export function AdminDashboard({
                 <button
                   key={item.id}
                   type="button"
-                  className={`focus-ring flex items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[13px] font-extrabold transition ${section === item.id ? "bg-[var(--primary)] text-white dark:text-[#071411]" : "text-[var(--muted-strong)] hover:bg-[var(--surface)]"}`}
+                  className={`focus-ring flex items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[13px] font-extrabold transition ${section === item.id ? "bg-[var(--primary)] text-white" : "text-[var(--muted-strong)] hover:bg-[var(--surface)]"}`}
                   onClick={() => setSection(item.id)}
                 >
                   <Icon size={17} /> {item.label}
