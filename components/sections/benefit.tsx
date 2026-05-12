@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, CalendarCheck, FileText, Home, MessageCircle, Search, ShieldCheck } from "lucide-react";
 import { useRef } from "react";
+import { assets } from "@/lib/assets";
 
 const stats = [
-  { icon: Search, value: "1", label: "Search apartments" },
-  { icon: BadgeCheck, value: "2", label: "Explore verified listings" },
-  { icon: MessageCircle, value: "3", label: "Contact landlord" },
-  { icon: CalendarCheck, value: "4", label: "Book visit or virtual tour" },
-  { icon: Home, value: "5", label: "Move into your student home" }
+  { icon: Search, value: "1", label: "Search apartments", image: assets.heroHome },
+  { icon: BadgeCheck, value: "2", label: "Explore verified listings", image: assets.property1 },
+  { icon: MessageCircle, value: "3", label: "Contact landlord", image: assets.heroSmallAlt },
+  { icon: CalendarCheck, value: "4", label: "Book visit or virtual tour", image: assets.tenantHome },
+  { icon: Home, value: "5", label: "Move into your student home", image: assets.property4 }
 ];
 
 const mobileSteps = [
@@ -121,12 +122,14 @@ export function Benefit() {
             {stats.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.label} className="rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)]">
+                <div key={item.label} className="relative overflow-hidden rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
+                  <div className="absolute inset-0 bg-cover bg-center opacity-45 saturate-[0.95]" style={{ backgroundImage: `url(${item.image})` }} />
+                  <div className="absolute inset-0 bg-[var(--card)]/55 backdrop-blur-[1px]" />
+                  <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)]">
                     <Icon size={22} />
                   </span>
-                  <strong className="mt-5 block text-[24px] font-bold leading-[1.1] text-[var(--primary)]">{item.value}</strong>
-                  <span className="mt-2 block text-[13px] font-medium leading-[1.45] text-[var(--muted-strong)]">{item.label}</span>
+                  <strong className="relative mt-5 block text-[24px] font-bold leading-[1.1] text-[var(--primary)]">{item.value}</strong>
+                  <span className="relative mt-2 block text-[13px] font-medium leading-[1.45] text-[var(--muted-strong)]">{item.label}</span>
                 </div>
               );
             })}

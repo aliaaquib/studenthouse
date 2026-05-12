@@ -15,9 +15,11 @@ export function TenantLandlord() {
           <br />
           <span className="whitespace-nowrap">
             Your{" "}
-            <span className="relative inline-block text-[var(--primary)]">
+            <span className="relative inline-block font-light text-[var(--primary)]">
               Perfect Room!
-              <span className="absolute -bottom-2 left-0 h-1.5 w-[72%] rounded-full bg-[#fff38a]" />
+              <svg className="absolute -bottom-3 left-0 h-3 w-[78%]" viewBox="0 0 180 18" fill="none" aria-hidden="true">
+                <path d="M3 12C47 3 111 3 177 10" stroke="#fff38a" strokeWidth="7" strokeLinecap="round" />
+              </svg>
             </span>
           </span>
         </h2>
@@ -28,9 +30,11 @@ export function TenantLandlord() {
               <br />
               <span className="whitespace-nowrap">
                 Your{" "}
-                <span className="relative inline-block text-[var(--primary)]">
+                <span className="relative inline-block font-light text-[var(--primary)]">
                   Perfect Room!
-                  <span className="absolute -bottom-3 left-0 h-2 w-[72%] rounded-full bg-[#fff38a]" />
+                  <svg className="absolute -bottom-4 left-0 h-4 w-[78%]" viewBox="0 0 180 18" fill="none" aria-hidden="true">
+                    <path d="M3 12C47 3 111 3 177 10" stroke="#fff38a" strokeWidth="7" strokeLinecap="round" />
+                  </svg>
                 </span>
               </span>
             </h2>
