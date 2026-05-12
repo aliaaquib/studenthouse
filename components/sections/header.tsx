@@ -129,14 +129,11 @@ export function Header() {
         {!searchOpen && scrolled ? (
           <button
             type="button"
-            className="focus-ring ml-auto mr-3 flex h-10 items-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--card)] text-[12px] font-medium text-[var(--foreground)] shadow-[var(--shadow-card)] xl:hidden"
+            className="focus-ring ml-auto mr-3 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--primary)] shadow-[var(--shadow-card)] xl:hidden"
             onClick={() => setSearchOpen(true)}
             aria-label="Open property search"
           >
-            <span className="border-r border-[var(--border)] px-3">Jalal-Abad</span>
-            <span className="flex h-10 w-10 items-center justify-center text-[var(--primary)]">
-              <Search size={15} />
-            </span>
+            <Search size={16} />
           </button>
         ) : null}
         <div className={`${searchOpen ? "hidden" : "hidden xl:flex"} items-center gap-3`}>
