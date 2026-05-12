@@ -14,7 +14,7 @@ export default function AddPropertyPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white">
             <Home size={25} />
           </div>
-          <h2 className="mt-7 text-[30px] font-bold leading-[1.16] tracking-[-0.01em]">Reach students looking for verified housing.</h2>
+          <h2 className="mt-7 text-[30px] font-medium leading-[1.16] tracking-[-0.01em]">Reach students looking for verified housing.</h2>
           <div className="mt-7 grid gap-4 text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
             <p>Submit your property details and our team will review the listing before it goes live.</p>
             <p className="flex items-center gap-2 text-[var(--muted-strong)]"><ShieldCheck size={18} color="var(--primary)" /> Verified listings build trust with students and parents.</p>

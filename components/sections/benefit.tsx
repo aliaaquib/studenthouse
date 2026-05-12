@@ -67,7 +67,7 @@ export function Benefit() {
     <section className="bg-[var(--background)] py-16 sm:py-20">
       <div className="section-frame md:hidden">
         <div className="rounded-[28px] bg-[#fff68f] px-5 py-7 text-[#202328]">
-          <h2 className="text-[28px] font-bold leading-[1.12] tracking-[-0.01em]">
+          <h2 className="text-[28px] font-medium leading-[1.12] tracking-[-0.01em]">
             How to rent your
             <br />
             <span className="text-[#7564f4]">first house</span>

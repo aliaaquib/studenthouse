@@ -26,7 +26,7 @@ export default async function AgentPage({ params }: { params: Promise<{ slug: st
         </div>
       </section>
       <section className="section-frame py-12">
-        <h2 className="text-[22px] font-extrabold leading-[1.4]">Verified student listings</h2>
+        <h2 className="text-[22px] font-semibold leading-[1.4]">Verified student listings</h2>
         <div className="mt-6 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
           {properties.slice(0, 3).map((property) => <PropertyCard key={property.slug} property={property} />)}
         </div>

@@ -108,21 +108,40 @@ textarea {
   font-size: clamp(38px, 5vw, 70px);
   line-height: 1.02;
   letter-spacing: 0;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .text-h2 {
   font-size: clamp(26px, 3vw, 44px);
   line-height: 1.12;
   letter-spacing: 0;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .text-h3 {
   font-size: clamp(20px, 2vw, 28px);
   line-height: 1.2;
   letter-spacing: 0;
-  font-weight: 800;
+  font-weight: 650;
+}
+
+.hero-heading-desktop {
+  display: none;
+}
+
+.hero-heading-mobile {
+  display: block;
+  line-height: 1.26;
+}
+
+@media (min-width: 768px) {
+  .hero-heading-desktop {
+    display: block;
+  }
+
+  .hero-heading-mobile {
+    display: none;
+  }
 }
 
 .card-border {

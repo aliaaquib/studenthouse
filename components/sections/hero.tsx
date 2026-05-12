@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Clock, GraduationCap, Map, MapPin, Search, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { MotionDiv } from "@/components/motion";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ const cityOptions = [
 ] as const;
 
 const searchWords = ["area", "city", "property", "university"];
+const heroWords = ["Room", "Apartment", "House", "Shared Room"];
 
 export function Hero() {
   const router = useRouter();
@@ -32,7 +33,16 @@ export function Hero() {
   const [query, setQuery] = useState("");
   const [citiesOpen, setCitiesOpen] = useState(false);
   const [comingSoonCity, setComingSoonCity] = useState<string | null>(null);
+  const [heroWordIndex, setHeroWordIndex] = useState(0);
   const typedWord = useTypingWords(searchWords);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setHeroWordIndex((index) => (index + 1) % heroWords.length);
+    }, 2200);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   function handleCitySelect(city: string) {
     const item = cityOptions.find((option) => option.name === city);
@@ -78,7 +88,29 @@ export function Hero() {
             <div className="mb-5 hidden items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-[12px] font-semibold text-[var(--primary)] shadow-[var(--shadow-card)] sm:inline-flex">
               <GraduationCap size={16} /> Verified student housing
             </div>
-            <h1 className="text-h1 max-w-[680px] text-balance">Find Your Perfect Student Apartment</h1>
+            <h1 className="hero-heading-desktop text-h1 max-w-[680px] text-balance">Find Your Perfect Student Apartment</h1>
+            <h1 className="hero-heading-mobile text-h1 max-w-[340px] text-balance">
+              Find Your
+              <br />
+              Perfect{" "}
+              <span className="relative inline-flex max-w-full overflow-hidden pb-2 align-baseline font-light text-[var(--primary)]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={heroWords[heroWordIndex]}
+                    className="inline-block"
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -30, opacity: 0 }}
+                    transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {heroWords[heroWordIndex]}
+                  </motion.span>
+                </AnimatePresence>
+                <svg className="absolute -bottom-2 left-0 h-3 w-full" viewBox="0 0 180 18" fill="none" aria-hidden="true">
+                  <path d="M3 12C47 3 111 3 177 10" stroke="#fff38a" strokeWidth="7" strokeLinecap="round" />
+                </svg>
+              </span>
+            </h1>
           </MotionDiv>
           <div className="mt-8 max-w-[760px] md:mt-10">
             <div className="relative">

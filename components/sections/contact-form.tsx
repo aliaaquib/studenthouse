@@ -30,7 +30,7 @@ export function ContactForm({ title = "Contact landlord", property }: { title?: 
       className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)] sm:p-6"
       onSubmit={form.handleSubmit(handleInquiry)}
     >
-      <h2 className="text-[20px] font-extrabold leading-[1.3]">{title}</h2>
+      <h2 className="text-[20px] font-semibold leading-[1.3]">{title}</h2>
       <p className="mt-2 text-[13px] font-normal leading-[1.6] text-[var(--muted)]">Ask a question, book a visit, or request a virtual tour.</p>
       <div className="mt-6 grid gap-4">
         <Input placeholder="Name" aria-label="Name" {...form.register("name")} />

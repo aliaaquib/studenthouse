@@ -46,7 +46,7 @@ export function AdminLoginForm({ nextPath, message }: { nextPath: string; messag
         <LockKeyhole size={22} />
       </div>
       <p className="mt-6 text-[12px] font-extrabold uppercase tracking-[0.12em] text-[var(--primary)]">Secure admin access</p>
-      <h1 className="mt-2 text-[30px] font-extrabold leading-[1.15]">Sign in to Admin CMS</h1>
+      <h1 className="mt-2 text-[30px] font-semibold leading-[1.15]">Sign in to Admin CMS</h1>
       <p className="mt-3 text-[14px] font-semibold leading-[1.7] text-[var(--muted)]">
         Server-validated access for property, university, inquiry, and platform settings management.
       </p>

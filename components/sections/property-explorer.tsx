@@ -98,7 +98,7 @@ export function PropertyExplorer({
       {!isPending && filteredProperties.length === 0 ? (
         <div className="mt-8 rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-[var(--shadow-card)]">
           <SearchX className="mx-auto text-[var(--primary)]" size={34} />
-          <h2 className="mt-4 text-[22px] font-extrabold">No apartments found</h2>
+          <h2 className="mt-4 text-[22px] font-semibold">No apartments found</h2>
           <p className="mx-auto mt-2 max-w-[420px] text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
             Try a different university, budget, room type, or roommate preference.
           </p>

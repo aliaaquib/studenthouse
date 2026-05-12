@@ -25,7 +25,7 @@ export function CollegePartners() {
   return (
     <section className="overflow-hidden bg-[var(--background)] py-16 sm:py-20" aria-labelledby="college-partners-heading">
       <div className="section-frame">
-        <h2 id="college-partners-heading" className="college-partners-title text-center text-[30px] font-extrabold leading-[1.15] sm:text-[38px] md:text-[44px]">
+        <h2 id="college-partners-heading" className="college-partners-title text-center text-[30px] font-medium leading-[1.15] sm:text-[38px] md:text-[44px]">
           College Partners
         </h2>
       </div>

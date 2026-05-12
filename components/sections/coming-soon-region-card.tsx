@@ -42,7 +42,7 @@ export function ComingSoonRegionCard({ city }: { city: City }) {
             <LockKeyhole size={13} /> Coming Soon
           </span>
           <span>
-            <h3 className="text-[22px] font-extrabold">{city.name}</h3>
+            <h3 className="text-[22px] font-semibold">{city.name}</h3>
             <p className="mt-2 flex items-center gap-2 text-[13px] font-normal text-[var(--muted)]">
               <Clock size={15} /> Launching soon
             </p>
@@ -69,7 +69,7 @@ export function ComingSoonRegionCard({ city }: { city: City }) {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)]">
                 <Clock size={22} />
               </div>
-              <h2 id={`region-${city.slug}-title`} className="mt-5 text-[24px] font-extrabold leading-[1.2]">
+              <h2 id={`region-${city.slug}-title`} className="mt-5 text-[24px] font-semibold leading-[1.2]">
                 Student housing in this region is launching soon.
               </h2>
               <p className="mt-3 text-[14px] font-normal leading-[1.7] text-[var(--muted)]">

@@ -10,7 +10,7 @@ export function TenantLandlord() {
       <div className="pointer-events-none absolute right-[-120px] top-[-90px] hidden h-[360px] w-[640px] rotate-[35deg] rounded-[60px] bg-[#f6f5f1] opacity-80 lg:block" />
 
       <div className="section-frame relative">
-        <h2 className="perfect-room-heading mb-8 text-[30px] font-bold leading-[1.12] tracking-[-0.01em] sm:text-[38px] lg:hidden">
+        <h2 className="perfect-room-heading mb-8 text-[30px] font-medium leading-[1.12] tracking-[-0.01em] sm:text-[38px] lg:hidden">
           <span className="whitespace-nowrap">We Will Help You Find</span>
           <br />
           <span className="whitespace-nowrap">
@@ -25,7 +25,7 @@ export function TenantLandlord() {
         </h2>
         <div className="grid grid-cols-12 gap-4 md:gap-6 lg:grid-cols-[420px_1fr_0.86fr] lg:grid-rows-[auto_auto] lg:items-start lg:gap-8 xl:grid-cols-[500px_1fr_0.86fr]">
           <div className="hidden lg:col-start-1 lg:row-start-1 lg:block">
-            <h2 className="perfect-room-heading max-w-[500px] text-[30px] font-bold leading-[1.12] tracking-[-0.01em] sm:text-[38px] lg:text-[38px] xl:text-[44px]">
+            <h2 className="perfect-room-heading max-w-[500px] text-[30px] font-medium leading-[1.12] tracking-[-0.01em] sm:text-[38px] lg:text-[38px] xl:text-[44px]">
               <span className="whitespace-nowrap">We Will Help You Find</span>
               <br />
               <span className="whitespace-nowrap">

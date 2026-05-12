@@ -88,7 +88,7 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
           ))}
         </div>
         <div className="mt-10 rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
-          <h2 className="text-[20px] font-extrabold leading-[1.35]">Amenities</h2>
+          <h2 className="text-[20px] font-semibold leading-[1.35]">Amenities</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {property.amenities.map((amenity) => (
               <span key={amenity} className="rounded-[14px] bg-[var(--surface)] px-4 py-3 text-[13px] font-medium text-[var(--muted-strong)]">{amenity}</span>
@@ -96,7 +96,7 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
           </div>
         </div>
         <div className="mt-10 rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
-          <h2 className="text-[20px] font-extrabold leading-[1.35]">Virtual tour and booking</h2>
+          <h2 className="text-[20px] font-semibold leading-[1.35]">Virtual tour and booking</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {tourItems.map((item) => {
               const Icon = item.icon;
@@ -111,14 +111,14 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
           </div>
         </div>
         <div className="mt-10 rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-6">
-          <h2 className="text-[20px] font-extrabold leading-[1.35]">Nearby university</h2>
+          <h2 className="text-[20px] font-semibold leading-[1.35]">Nearby university</h2>
           <p className="mt-3 text-[15px] font-normal leading-[1.7] text-[var(--muted)]">
             {property.university} is {property.distance.toLowerCase()}, with student-friendly transit, grocery access, and verified landlord support nearby.
           </p>
         </div>
         {similarProperties.length > 0 ? (
           <div className="mt-12">
-            <h2 className="text-[22px] font-extrabold leading-[1.4]">Similar apartments</h2>
+            <h2 className="text-[22px] font-semibold leading-[1.4]">Similar apartments</h2>
             <div className="mt-6 grid gap-8 md:grid-cols-2">
               {similarProperties.map((item) => <PropertyCard key={item.id} property={item} />)}
             </div>
@@ -128,7 +128,7 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
       <aside className="lg:sticky lg:top-28 lg:self-start">
         <div className="mb-5 rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
           <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">Landlord</p>
-          <h2 className="mt-2 text-[20px] font-extrabold">{property.agent}</h2>
+          <h2 className="mt-2 text-[20px] font-semibold">{property.agent}</h2>
           <p className="mt-2 text-[13px] font-normal leading-[1.6] text-[var(--muted)]">Verified housing partner for {property.university} students.</p>
         </div>
         <ContactForm title={`Ask about ${property.name}`} property={property} />

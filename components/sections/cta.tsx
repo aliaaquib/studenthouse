@@ -23,7 +23,7 @@ export function CTA() {
     <section className="bg-[var(--primary)] py-16 text-center text-white">
       <div className="section-frame">
         <p className="text-[13px] font-semibold uppercase tracking-[0.12em] opacity-80">Weekly housing alerts</p>
-        <h2 className="mx-auto mt-3 max-w-[620px] text-[26px] font-bold leading-[1.2] sm:text-[40px]">
+        <h2 className="mx-auto mt-3 max-w-[620px] text-[26px] font-medium leading-[1.2] sm:text-[40px]">
           Get the Latest Student
           <br />
           Housing Updates

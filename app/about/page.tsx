@@ -31,7 +31,7 @@ export default function AboutPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white">
             <GraduationCap size={26} />
           </div>
-          <h2 className="mt-7 max-w-[520px] text-[32px] font-bold leading-[1.16] tracking-[-0.01em] sm:text-[42px]">
+          <h2 className="mt-7 max-w-[520px] text-[32px] font-medium leading-[1.16] tracking-[-0.01em] sm:text-[42px]">
             Built for students, not luxury real estate.
           </h2>
           <p className="mt-5 max-w-[560px] text-[15px] font-normal leading-[1.8] text-[var(--muted)]">

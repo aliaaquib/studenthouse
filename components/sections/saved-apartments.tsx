@@ -17,7 +17,7 @@ export function SavedApartments({ properties }: { properties: Property[] }) {
       <section className="section-frame py-12">
         <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-[var(--shadow-card)]">
           <Heart className="mx-auto text-[var(--primary)]" size={36} />
-          <h2 className="mt-4 text-[24px] font-extrabold">No saved apartments yet</h2>
+          <h2 className="mt-4 text-[24px] font-semibold">No saved apartments yet</h2>
           <p className="mx-auto mt-2 max-w-[440px] text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
             Tap the heart on any apartment to build your shortlist and compare rooms later.
           </p>

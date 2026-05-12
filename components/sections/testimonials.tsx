@@ -32,7 +32,7 @@ export function Testimonials() {
     <section className="overflow-hidden bg-[var(--background)] py-16 sm:py-20">
       <div className="section-frame">
         <div className="text-left sm:text-center">
-          <h2 className="text-[34px] font-bold leading-[1.12] tracking-[-0.01em] sm:mx-auto sm:max-w-[620px] sm:text-[44px]">
+          <h2 className="text-[34px] font-medium leading-[1.12] tracking-[-0.01em] sm:mx-auto sm:max-w-[620px] sm:text-[44px]">
             What <span className="text-[var(--primary)]">Students</span> Say
             <br className="sm:hidden" /> About Us
           </h2>
