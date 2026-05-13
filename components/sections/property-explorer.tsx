@@ -8,9 +8,9 @@ import { PropertyCard } from "@/components/sections/property-card";
 import { PropertyFilters } from "@/components/sections/property-filters";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { activeRegions, comingSoonRegions } from "@/lib/data";
+import { trackSearchAction } from "@/lib/actions/user-data";
 import { defaultFilters, filterProperties } from "@/lib/property-utils";
-import type { Property, PropertyFilters as PropertyFiltersValue } from "@/types/property";
+import type { Property, PropertyFilters as PropertyFiltersValue, Region } from "@/types/property";
 
 const pinClasses = [
   "left-[18%] top-[18%]",
@@ -22,11 +22,15 @@ const pinClasses = [
 
 export function PropertyExplorer({
   properties,
+  activeRegions,
+  comingSoonRegions,
   variant = "grid",
   limit,
   initialFilters = defaultFilters
 }: {
   properties: Property[];
+  activeRegions: Region[];
+  comingSoonRegions: Region[];
   variant?: "grid" | "map";
   limit?: number;
   initialFilters?: PropertyFiltersValue;
@@ -44,6 +48,13 @@ export function PropertyExplorer({
   }, [startTransition]);
 
   const syncSearchUrl = useCallback((nextFilters: PropertyFiltersValue) => {
+    void trackSearchAction({
+      query: nextFilters.query,
+      region: nextFilters.region !== "Any" ? nextFilters.region : undefined,
+      university: nextFilters.university !== "Any" ? nextFilters.university : undefined,
+      roomType: nextFilters.roomType !== "Any" ? nextFilters.roomType : undefined
+    });
+
     const params = new URLSearchParams();
     if (nextFilters.query.trim()) params.set("q", nextFilters.query.trim());
     if (nextFilters.region !== "Any") params.set("region", nextFilters.region);

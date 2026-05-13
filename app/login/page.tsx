@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AdminLoginForm } from "@/components/auth/admin-login-form";
+import { AuthForm } from "@/components/auth/auth-form";
 
 export const metadata: Metadata = {
-  title: "Admin Login | StudentNest",
+  title: "Login | StudentNest",
   robots: {
     index: false,
     follow: false
@@ -19,14 +19,19 @@ export default async function LoginPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const nextPath = readParam(params?.next) ?? "/admin/dashboard";
+  const nextPath = readParam(params?.next) ?? "/dashboard";
   const error = readParam(params?.error);
-  const message = error === "expired" ? "Your admin session expired. Please sign in again." : undefined;
+  const mode = readParam(params?.mode) === "signup" ? "signup" : "login";
+  const message = error === "expired" ? "Your session expired. Please sign in again." : undefined;
 
   return (
     <main className="figma-shell min-h-screen bg-[var(--background)]">
       <section className="grid min-h-screen place-items-center px-4 py-12">
-        <AdminLoginForm nextPath={nextPath.startsWith("/admin") ? nextPath : "/admin/dashboard"} message={message} />
+        <AuthForm
+          mode={mode}
+          nextPath={nextPath.startsWith("/") ? nextPath : "/dashboard"}
+          message={message}
+        />
       </section>
     </main>
   );

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/auth/guards";
+import { getCurrentSession } from "@/lib/auth/guards";
 
 export async function GET() {
-  const session = await getAdminSession();
+  const session = await getCurrentSession();
 
-  if (!session) {
+  if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

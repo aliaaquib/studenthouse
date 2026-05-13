@@ -4,16 +4,19 @@ import Link from "next/link";
 import { CalendarDays, Heart, Home, MessageSquare, Search, Settings } from "lucide-react";
 import { PropertyCard } from "@/components/sections/property-card";
 import { Input } from "@/components/ui/input";
-import { useSavedProperties } from "@/hooks/use-saved-properties";
 import type { Property } from "@/types/property";
 
-const recentSearches = ["JAIU under 15,000 KGS", "Shared room Jalal-Abad", "Female only CAIMU"];
-const inquiryHistory = ["Virtual tour requested", "WhatsApp landlord opened", "Booking request drafted"];
-
-export function StudentDashboard({ properties }: { properties: Property[] }) {
-  const { savedSet } = useSavedProperties();
-  const savedProperties = properties.filter((property) => savedSet.has(property.id));
-  const viewedProperties = properties.slice(0, 3);
+export function StudentDashboard({
+  savedProperties,
+  recentSearches,
+  inquiryHistory,
+  viewedProperties
+}: {
+  savedProperties: Property[];
+  recentSearches: string[];
+  inquiryHistory: string[];
+  viewedProperties: Property[];
+}) {
   const metrics = [
     { icon: Heart, value: String(savedProperties.length), label: "Saved apartments" },
     { icon: CalendarDays, value: "4", label: "Tours booked" },
@@ -39,20 +42,20 @@ export function StudentDashboard({ properties }: { properties: Property[] }) {
         <div>
           <h2 className="text-[22px] font-semibold leading-[1.4]">Saved apartments</h2>
           <div className="mt-6 grid gap-8 md:grid-cols-2">
-            {(savedProperties.length ? savedProperties : properties.slice(0, 2)).map((property) => <PropertyCard key={property.id} property={property} />)}
+            {(savedProperties.length ? savedProperties : viewedProperties.slice(0, 2)).map((property) => <PropertyCard key={property.id} property={property} />)}
           </div>
         </div>
         <aside className="grid gap-5 self-start">
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
             <h2 className="flex items-center gap-2 text-[18px] font-semibold"><Search size={18} color="var(--primary)" /> Recent searches</h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              {recentSearches.map((item) => <span key={item} className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted-strong)]">{item}</span>)}
+              {recentSearches.length ? recentSearches.map((item) => <span key={item} className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-[12px] font-medium text-[var(--muted-strong)]">{item}</span>) : <span className="text-[13px] font-medium text-[var(--muted)]">No recent searches yet.</span>}
             </div>
           </div>
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
             <h2 className="flex items-center gap-2 text-[18px] font-semibold"><MessageSquare size={18} color="var(--primary)" /> Inquiry history</h2>
             <ul className="mt-4 space-y-3 text-[13px] font-normal text-[var(--muted)]">
-              {inquiryHistory.map((item) => <li key={item}>{item}</li>)}
+              {inquiryHistory.length ? inquiryHistory.map((item) => <li key={item}>{item}</li>) : <li>No inquiries yet.</li>}
             </ul>
           </div>
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
@@ -65,11 +68,11 @@ export function StudentDashboard({ properties }: { properties: Property[] }) {
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
             <h2 className="text-[18px] font-semibold">Viewed properties</h2>
             <div className="mt-4 grid gap-3">
-              {viewedProperties.map((property) => (
+              {viewedProperties.length ? viewedProperties.map((property) => (
                 <Link key={property.id} href={`/properties/${property.slug}`} className="rounded-[14px] bg-[var(--surface)] p-3 text-[13px] font-medium hover:text-[var(--primary)]">
                   {property.title}
                 </Link>
-              ))}
+              )) : <span className="text-[13px] font-medium text-[var(--muted)]">No recent views yet.</span>}
             </div>
           </div>
         </aside>

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import type { Viewport } from "next";
 import type { ReactNode } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { AuthProvider } from "@/components/providers/auth-provider";
+import { AdminSettingsProvider } from "@/components/providers/admin-settings-provider";
+import { getPlatformSettings } from "@/lib/db/queries";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -36,21 +39,27 @@ export const viewport: Viewport = {
   themeColor: "#ffffff"
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const settings = await getPlatformSettings();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: "try{if(localStorage.getItem('studentnest-theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}"
+            __html: "try{if(document.cookie.split('; ').find(function(item){return item.indexOf('studentnest-theme=')===0;})?.split('=')[1]==='dark'){document.documentElement.classList.add('dark')}}catch(e){}"
           }}
         />
       </head>
-      <body className={plusJakarta.variable}>{children}</body>
+      <body className={plusJakarta.variable}>
+        <AuthProvider>
+          <AdminSettingsProvider settings={settings}>{children}</AdminSettingsProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

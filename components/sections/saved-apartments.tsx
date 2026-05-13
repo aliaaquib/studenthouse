@@ -5,14 +5,10 @@ import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { PropertyCard } from "@/components/sections/property-card";
 import { Button } from "@/components/ui/button";
-import { useSavedProperties } from "@/hooks/use-saved-properties";
 import type { Property } from "@/types/property";
 
 export function SavedApartments({ properties }: { properties: Property[] }) {
-  const { savedSet } = useSavedProperties();
-  const savedProperties = properties.filter((property) => savedSet.has(property.id));
-
-  if (savedProperties.length === 0) {
+  if (properties.length === 0) {
     return (
       <section className="section-frame py-12">
         <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-[var(--shadow-card)]">
@@ -31,7 +27,7 @@ export function SavedApartments({ properties }: { properties: Property[] }) {
 
   return (
     <section className="section-frame grid gap-8 py-12 md:grid-cols-2 xl:grid-cols-3">
-      {savedProperties.map((property) => (
+      {properties.map((property) => (
         <motion.div key={property.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
           <PropertyCard property={property} />
         </motion.div>

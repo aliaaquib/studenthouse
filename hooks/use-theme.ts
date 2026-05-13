@@ -14,7 +14,7 @@ function subscribe(callback: () => void) {
 }
 
 function getSnapshot() {
-  return window.localStorage.getItem(THEME_KEY) === "dark";
+  return document.cookie.split("; ").find((item) => item.startsWith(`${THEME_KEY}=`))?.split("=")[1] === "dark";
 }
 
 export function useTheme() {
@@ -23,7 +23,7 @@ export function useTheme() {
   const toggleTheme = useCallback(() => {
     const next = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", next);
-    window.localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+    document.cookie = `${THEME_KEY}=${next ? "dark" : "light"}; path=/; max-age=31536000; samesite=lax`;
     window.dispatchEvent(new Event("studentnest-theme"));
   }, []);
 

@@ -1,8 +1,11 @@
 import { ContactForm } from "@/components/sections/contact-form";
 import { PageChrome, PageIntro } from "@/components/sections/page-chrome";
-import { properties } from "@/lib/data";
+import { getPublicProperties } from "@/lib/db/queries";
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const properties = await getPublicProperties();
+  const property = properties[0];
+
   return (
     <PageChrome>
       <PageIntro title="Contact a verified landlord" copy="Send a secure inquiry, book a visit, request a virtual tour, or ask about roommate preferences before applying." />
@@ -15,7 +18,7 @@ export default function ContactPage() {
             ))}
           </div>
         </div>
-        <ContactForm title={`Ask about ${properties[0].name}`} property={properties[0]} />
+        <ContactForm title={property ? `Ask about ${property.name}` : "Contact a landlord"} property={property} />
       </section>
     </PageChrome>
   );

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { WHATSAPP_PHONE } from "@/lib/property-utils";
+import { useAdminSettings } from "@/hooks/use-admin-settings";
 
 const schema = z.object({
   name: z.string().min(2, "Enter your name"),
@@ -20,6 +20,7 @@ const schema = z.object({
 type AddPropertyValues = z.infer<typeof schema>;
 
 export function AddPropertyForm() {
+  const { whatsAppPhone } = useAdminSettings();
   const form = useForm<AddPropertyValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -43,7 +44,7 @@ export function AddPropertyForm() {
       `Details: ${values.details}`
     ].join("\n");
 
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/${whatsAppPhone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   }
 
   return (

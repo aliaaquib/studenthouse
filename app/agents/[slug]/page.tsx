@@ -2,11 +2,36 @@ import { Star } from "lucide-react";
 import { ContactForm } from "@/components/sections/contact-form";
 import { PageChrome } from "@/components/sections/page-chrome";
 import { PropertyCard } from "@/components/sections/property-card";
-import { agents, properties } from "@/lib/data";
+import { getPublicProperties } from "@/lib/db/queries";
 
 export default async function AgentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const agent = agents.find((item) => item.slug === slug) ?? agents[0];
+  const properties = await getPublicProperties();
+  const agentGroups = Array.from(new Map(
+    properties.map((property) => {
+      const agentSlug = property.agent.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      return [agentSlug, {
+        slug: agentSlug,
+        name: property.agent,
+        title: "Verified housing advisor",
+        location: property.region,
+        rating: 4.9,
+        deals: properties.filter((item) => item.agent === property.agent).length
+      }];
+    })
+  ).values());
+  const agent = agentGroups.find((item) => item.slug === slug) ?? agentGroups[0];
+  const agentProperties = properties.filter((property) => property.agent === agent?.name).slice(0, 3);
+
+  if (!agent) {
+    return (
+      <PageChrome>
+        <section className="section-frame py-16">
+          <h1 className="text-h2">No advisor found</h1>
+        </section>
+      </PageChrome>
+    );
+  }
 
   return (
     <PageChrome>
@@ -28,7 +53,7 @@ export default async function AgentPage({ params }: { params: Promise<{ slug: st
       <section className="section-frame py-12">
         <h2 className="text-[22px] font-semibold leading-[1.4]">Verified student listings</h2>
         <div className="mt-6 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-          {properties.slice(0, 3).map((property) => <PropertyCard key={property.slug} property={property} />)}
+          {agentProperties.map((property) => <PropertyCard key={property.slug} property={property} />)}
         </div>
       </section>
     </PageChrome>

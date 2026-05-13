@@ -1,11 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, MapPin, Sofa, Users, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PropertyCard } from "@/components/sections/property-card";
-import { properties } from "@/lib/data";
+import { PropertyImage } from "@/components/ui/property-image";
+import type { Property } from "@/types/property";
 
-export function Listings() {
+export function Listings({ properties }: { properties: Property[] }) {
   return (
     <section className="bg-[var(--background)] py-16 sm:py-20 md:bg-gradient-to-b md:from-[var(--background)] md:to-[var(--surface)]">
       <div className="section-frame">
@@ -47,7 +49,7 @@ export function Listings() {
               className="w-[82vw] max-w-[330px] shrink-0 snap-start overflow-hidden rounded-[28px] bg-[var(--card)]"
             >
               <div className="h-[190px] overflow-hidden rounded-t-[28px]">
-                <Image
+                <PropertyImage
                   src={property.image}
                   alt={property.name}
                   width={660}

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   ArrowDown,
   ArrowUp,
@@ -16,6 +15,7 @@ import {
   Inbox,
   LayoutDashboard,
   ListChecks,
+  Loader2,
   LockKeyhole,
   MessageCircle,
   Plus,
@@ -31,20 +31,27 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PropertyImage } from "@/components/ui/property-image";
 import { Toast } from "@/components/ui/toast";
-import { useLocalStorageValue } from "@/hooks/use-local-storage";
+import { deletePropertyAction, deleteUniversityAction, reorderFeaturedPropertiesAction, updatePlatformSettingsAction, updatePropertyFlagsAction, updateRegionAction, upsertPropertyAction, upsertUniversityAction } from "@/lib/actions/admin-data";
 import { useTheme } from "@/hooks/use-theme";
+import { type AdminSettings } from "@/lib/admin-settings";
 import { assets } from "@/lib/assets";
-import { formatKgs, getWhatsAppHref, WHATSAPP_PHONE } from "@/lib/property-utils";
+import { MAX_PROPERTY_IMAGE_SIZE, validateImageMimeType } from "@/lib/property-images";
+import { formatKgs, WHATSAPP_PHONE } from "@/lib/property-utils";
 import type { Property, Region, University } from "@/types/property";
 
 type AdminSection = "overview" | "properties" | "add" | "edit" | "universities" | "inquiries" | "featured" | "users" | "settings";
 type AdminProperty = Property & { status: "active" | "draft" | "unavailable" };
+type AdminInquiry = { id: string; name: string; apartmentTitle: string; date: string; whatsappNumber: string };
+type AdminUser = { id: string; name: string; role: "admin" | "student"; status: string; activity: string };
+type FormSubmissionResult = { ok: boolean; message: string; reset?: boolean };
 
 const EMPTY_PROPERTIES: AdminProperty[] = [];
 const EMPTY_UNIVERSITIES: University[] = [];
@@ -67,8 +74,8 @@ const propertySchema = z.object({
   priceMonthly: z.coerce.number().min(1000, "Monthly rent must be at least 1,000 KGS"),
   description: z.string().min(20, "Description needs more detail"),
   location: z.string().min(3, "Location is required"),
-  city: z.literal("Jalal-Abad"),
-  region: z.literal("Jalal-Abad"),
+  city: z.string().min(2, "City is required"),
+  region: z.string().min(2, "Region is required"),
   university: z.string().min(3, "Nearby university is required"),
   distance: z.string().min(2, "Distance is required"),
   roomType: z.enum(["Studio", "Private room", "Shared room", "Apartment"]),
@@ -101,17 +108,8 @@ const settingsSchema = z.object({
   homepage: z.string().min(10)
 });
 
-type AdminSettings = z.infer<typeof settingsSchema>;
-
-const defaultAdminSettings: AdminSettings = {
-  whatsApp: `+${WHATSAPP_PHONE}`,
-  brand: "StudentNest",
-  currency: "KGS",
-  homepage: "Safe, affordable student housing near your university."
-};
-
 function toAdminProperty(property: Property): AdminProperty {
-  return { ...property, status: "active" };
+  return { ...property, status: property.status ?? "active" };
 }
 
 function createSlug(value: string) {
@@ -189,23 +187,34 @@ export function AdminDashboard({
   initialProperties,
   initialUniversities,
   initialActiveRegions,
-  initialComingSoonRegions
+  initialComingSoonRegions,
+  initialSettings,
+  initialUsers,
+  initialInquiries,
+  initialFavoritesCount
 }: {
   adminEmail?: string | null;
   initialProperties: Property[];
   initialUniversities: University[];
   initialActiveRegions: Region[];
   initialComingSoonRegions: Region[];
+  initialSettings: AdminSettings;
+  initialUsers: AdminUser[];
+  initialInquiries: AdminInquiry[];
+  initialFavoritesCount: number;
 }) {
+  const router = useRouter();
+  const [, startRefreshTransition] = useTransition();
   const [section, setSection] = useState<AdminSection>("overview");
-  const [properties, setProperties] = useLocalStorageValue<AdminProperty[]>("studentnest-admin-properties", initialProperties.map(toAdminProperty));
-  const [universities, setUniversities] = useLocalStorageValue<University[]>("studentnest-admin-universities", initialUniversities);
-  const [activeRegions, setActiveRegions] = useLocalStorageValue<Region[]>("studentnest-admin-active-regions", initialActiveRegions);
-  const [comingSoonRegions, setComingSoonRegions] = useLocalStorageValue<Region[]>("studentnest-admin-coming-regions", initialComingSoonRegions);
+  const [properties, setProperties] = useState<AdminProperty[]>(() => initialProperties.map(toAdminProperty));
+  const [universities, setUniversities] = useState<University[]>(initialUniversities);
+  const [activeRegions, setActiveRegions] = useState<Region[]>(initialActiveRegions);
+  const [comingSoonRegions, setComingSoonRegions] = useState<Region[]>(initialComingSoonRegions);
+  const [settings, setSettings] = useState<AdminSettings>(initialSettings);
   const [editingProperty, setEditingProperty] = useState<AdminProperty | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminProperty | null>(null);
   const [deletedProperty, setDeletedProperty] = useState<AdminProperty | null>(null);
-  const [toast, setToast] = useState("Admin workspace ready");
+  const [toast, setToast] = useState("");
   const [query, setQuery] = useState("");
   const { isDark, toggleTheme } = useTheme();
 
@@ -220,48 +229,117 @@ export function AdminDashboard({
     { label: "Total properties", value: String(safeProperties.length), icon: Home },
     { label: "Active listings", value: String(safeProperties.filter((property) => property.status === "active").length), icon: CheckCircle2 },
     { label: "Featured listings", value: String(featuredProperties.length), icon: Star },
-    { label: "Inquiries received", value: "128", icon: Inbox },
-    { label: "Saved apartments", value: "342", icon: BadgeCheck },
-    { label: "Total users", value: "1,284", icon: Users }
+    { label: "Inquiries received", value: String(initialInquiries.length), icon: Inbox },
+    { label: "Saved apartments", value: String(initialFavoritesCount), icon: BadgeCheck },
+    { label: "Total users", value: String(initialUsers.length), icon: Users }
   ];
 
-  function saveProperty(values: PropertyFormValues, existing?: AdminProperty) {
-    const nextProperty = propertyFromValues(values, existing);
-    setProperties((current) => {
-      if (existing) return current.map((property) => property.id === existing.id ? nextProperty : property);
-      return [nextProperty, ...current];
-    });
-    setEditingProperty(null);
-    setSection("properties");
-    setToast(existing ? "Property changes saved" : "New property added");
+  function toPropertyPayload(property: AdminProperty) {
+    return {
+      id: property.id.startsWith("STN-") ? undefined : property.id,
+      title: property.title,
+      slug: property.slug,
+      description: property.description,
+      monthlyRent: property.priceMonthly,
+      location: property.location,
+      region: property.region,
+      universityName: property.university,
+      distance: property.distance,
+      roomType: property.roomType,
+      furnished: property.furnished,
+      utilitiesIncluded: property.utilitiesIncluded,
+      genderPreference: property.genderPreference,
+      amenities: property.amenities,
+      roommateCount: property.roommates,
+      verified: Boolean(property.verified),
+      featured: Boolean(property.popular),
+      status: property.status,
+      availableFrom: property.availabilityDate,
+      whatsappNumber: property.landlordPhone,
+      images: property.images
+    };
   }
 
-  function deleteProperty() {
+  async function saveProperty(values: PropertyFormValues, existing?: AdminProperty): Promise<FormSubmissionResult> {
+    const nextProperty = propertyFromValues(values, existing);
+    const previousProperties = safeProperties;
+
+    try {
+      setProperties((current) => {
+        if (existing) return current.map((property) => property.id === existing.id ? nextProperty : property);
+        return [nextProperty, ...current];
+      });
+
+      const result = await upsertPropertyAction(toPropertyPayload(nextProperty));
+      if (!result.ok) {
+        setProperties(previousProperties);
+        const message = result.message ?? "Failed to save property";
+        setToast(`Failed to save property · ${message}`);
+        return { ok: false, message };
+      }
+
+      if (result.id && !existing) {
+        setProperties((current) => current.map((property) => property.id === nextProperty.id ? { ...property, id: result.id } : property));
+      }
+
+      setEditingProperty(null);
+      setSection("properties");
+      setToast(existing ? "Property updated successfully" : "Property added successfully");
+      startRefreshTransition(() => {
+        router.refresh();
+      });
+
+      return {
+        ok: true,
+        message: existing ? "Property updated successfully" : "Property added successfully",
+        reset: !existing
+      };
+    } catch (error) {
+      setProperties(previousProperties);
+      const message = error instanceof Error ? error.message : "Failed to save property";
+      setToast(`Failed to save property · ${message}`);
+      return { ok: false, message };
+    }
+  }
+
+  async function deleteProperty() {
     if (!deleteTarget) return;
     setDeletedProperty(deleteTarget);
     setProperties((current) => current.filter((property) => property.id !== deleteTarget.id));
+    const result = await deletePropertyAction(deleteTarget.id);
+    router.refresh();
     setDeleteTarget(null);
-    setToast("Property deleted. Undo is available.");
+    setToast(result.ok ? "Property deleted. Undo is available." : `Unable to delete property · ${result.message}`);
   }
 
-  function undoDelete() {
+  async function undoDelete() {
     if (!deletedProperty) return;
     setProperties((current) => [deletedProperty, ...current]);
+    await upsertPropertyAction({ ...toPropertyPayload(deletedProperty), id: undefined });
+    router.refresh();
     setDeletedProperty(null);
     setToast("Property restored");
   }
 
-  function toggleFeatured(id: string) {
-    setProperties((current) => current.map((property) => property.id === id ? { ...property, popular: !property.popular } : property));
+  async function toggleFeatured(id: string) {
+    const nextProperty = safeProperties.find((property) => property.id === id);
+    const nextFeatured = !nextProperty?.popular;
+    setProperties((current) => current.map((property) => property.id === id ? { ...property, popular: nextFeatured } : property));
+    await updatePropertyFlagsAction(id, { featured: nextFeatured });
+    router.refresh();
     setToast("Featured listing visibility updated");
   }
 
-  function toggleAvailability(id: string) {
-    setProperties((current) => current.map((property) => property.id === id ? { ...property, status: property.status === "active" ? "unavailable" : "active" } : property));
+  async function toggleAvailability(id: string) {
+    const nextProperty = safeProperties.find((property) => property.id === id);
+    const nextStatus = nextProperty?.status === "active" ? "unavailable" : "active";
+    setProperties((current) => current.map((property) => property.id === id ? { ...property, status: nextStatus, verified: nextStatus === "active" } : property));
+    await updatePropertyFlagsAction(id, { status: nextStatus, verified: nextStatus === "active" });
+    router.refresh();
     setToast("Availability updated");
   }
 
-  function moveFeatured(id: string, direction: "up" | "down") {
+  async function moveFeatured(id: string, direction: "up" | "down") {
     const featuredIds = featuredProperties.map((property) => property.id);
     const from = featuredIds.indexOf(id);
     const to = direction === "up" ? from - 1 : from + 1;
@@ -277,46 +355,72 @@ export function AdminDashboard({
       if (bIndex === -1) return -1;
       return aIndex - bIndex;
     }));
+    await reorderFeaturedPropertiesAction(reordered);
+    router.refresh();
     setToast("Featured order updated");
   }
 
-  function toggleRegion(region: Region) {
+  async function toggleRegion(region: Region) {
     if (region.status === "active") {
       setActiveRegions((current) => current.filter((item) => item.slug !== region.slug));
       setComingSoonRegions((current) => [...current, { ...region, status: "coming-soon" }]);
+      await updateRegionAction(region.name, "coming-soon");
+      router.refresh();
       setToast(`${region.name} marked coming soon`);
     } else {
       setComingSoonRegions((current) => current.filter((item) => item.slug !== region.slug));
       setActiveRegions((current) => [...current, { ...region, status: "active" }]);
+      await updateRegionAction(region.name, "active");
+      router.refresh();
       setToast(`${region.name} activated`);
     }
   }
 
+  async function saveUniversity(nextUniversity: University, editingSlug?: string) {
+    setUniversities((current) => editingSlug ? current.map((item) => item.slug === editingSlug ? nextUniversity : item) : [nextUniversity, ...current]);
+    const result = await upsertUniversityAction({
+      name: nextUniversity.name.replace(/\s+\([^)]+\)$/, ""),
+      shortName: nextUniversity.slug.toUpperCase(),
+      city: nextUniversity.city,
+      region: nextUniversity.city
+    });
+    router.refresh();
+    setToast(result.ok ? "University saved" : `Unable to save university · ${result.message}`);
+  }
+
+  async function removeUniversity(university: University) {
+    setUniversities((current) => current.filter((item) => item.slug !== university.slug));
+    const result = await deleteUniversityAction(university.slug);
+    router.refresh();
+    setToast(result.ok ? "University removed" : `Unable to remove university · ${result.message}`);
+  }
+
+  async function saveSettings(nextSettings: AdminSettings) {
+    setSettings(nextSettings);
+    const result = await updatePlatformSettingsAction(nextSettings);
+    router.refresh();
+    setToast(result.ok ? "Settings saved" : `Unable to save settings · ${result.message}`);
+  }
+
   return (
-    <div className="figma-shell min-h-screen bg-[var(--background)]">
-      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-b border-[var(--border)] bg-[var(--card)] p-4 lg:border-b-0 lg:border-r lg:p-5">
+    <div className="figma-shell min-h-screen bg-[var(--background)] lg:h-screen lg:overflow-hidden">
+      <div className="grid min-h-screen lg:h-screen lg:grid-cols-[280px_1fr] lg:overflow-hidden">
+        <aside className="flex flex-col border-b border-[var(--border)] bg-[var(--card)] p-4 lg:h-screen lg:overflow-hidden lg:border-b-0 lg:border-r lg:p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-[var(--muted)]">StudentNest</p>
               <h1 className="text-[22px] font-extrabold leading-[1.2]">Admin CMS</h1>
               {adminEmail ? <p className="mt-1 text-[12px] font-bold text-[var(--muted)]">{adminEmail}</p> : null}
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={toggleTheme}>{isDark ? "Light" : "Dark"}</Button>
-              <form action="/auth/logout" method="post">
-                <Button size="sm" variant="outline" type="submit">Logout</Button>
-              </form>
-            </div>
           </div>
-          <nav className="mt-6 grid gap-2" aria-label="Admin navigation">
+          <nav className="mt-6 grid flex-1 content-start gap-1.5" aria-label="Admin navigation">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <button
                   key={item.id}
                   type="button"
-                  className={`focus-ring flex items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[13px] font-extrabold transition ${section === item.id ? "bg-[var(--primary)] text-white" : "text-[var(--muted-strong)] hover:bg-[var(--surface)]"}`}
+                  className={`focus-ring flex items-center gap-3 rounded-[14px] px-4 py-2.5 text-left text-[13px] font-extrabold transition ${section === item.id ? "bg-[var(--primary)] text-white" : "text-[var(--muted-strong)] hover:bg-[var(--surface)]"}`}
                   onClick={() => setSection(item.id)}
                 >
                   <Icon size={17} /> {item.label}
@@ -324,8 +428,14 @@ export function AdminDashboard({
               );
             })}
           </nav>
+          <div className="mt-auto grid gap-2 border-t border-[var(--border)] pt-4">
+            <Button size="sm" variant="outline" onClick={toggleTheme}>{isDark ? "Light mode" : "Dark mode"}</Button>
+            <form action="/auth/logout" method="post">
+              <Button className="w-full" size="sm" variant="outline" type="submit">Logout</Button>
+            </form>
+          </div>
         </aside>
-        <main className="min-w-0 p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 p-4 sm:p-6 lg:h-screen lg:overflow-y-auto lg:p-8">
           <div className="flex flex-col gap-4 rounded-[24px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)] md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-[var(--primary)]">Secure admin workspace</p>
@@ -352,16 +462,17 @@ export function AdminDashboard({
                 />
               ) : null}
               {section === "add" ? <PropertyForm universities={safeUniversities} onSubmit={(values) => saveProperty(values)} /> : null}
-              {section === "universities" ? <UniversitiesSection universities={safeUniversities} setUniversities={setUniversities} /> : null}
-              {section === "inquiries" ? <InquiriesSection properties={safeProperties} /> : null}
+              {section === "universities" ? <UniversitiesSection universities={safeUniversities} onSave={saveUniversity} onRemove={removeUniversity} /> : null}
+              {section === "inquiries" ? <InquiriesSection inquiries={initialInquiries} /> : null}
               {section === "featured" ? <FeaturedSection properties={featuredProperties} onToggleFeatured={toggleFeatured} onMove={moveFeatured} /> : null}
-              {section === "users" ? <UsersSection /> : null}
+              {section === "users" ? <UsersSection users={initialUsers} /> : null}
               {section === "settings" ? (
                 <SettingsSection
+                  settings={settings}
                   activeRegions={safeActiveRegions}
                   comingSoonRegions={safeComingSoonRegions}
                   onToggleRegion={toggleRegion}
-                  onSaved={() => setToast("Settings saved")}
+                  onSaved={saveSettings}
                 />
               ) : null}
             </motion.div>
@@ -379,7 +490,7 @@ export function AdminDashboard({
         ) : null}
       </AnimatePresence>
       <div className="fixed bottom-4 left-4 z-[90] flex flex-col gap-3">
-        <Toast>{toast}</Toast>
+        {toast ? <Toast>{toast}</Toast> : null}
         {deletedProperty ? (
           <Button size="sm" variant="outline" onClick={undoDelete}><RotateCcw size={15} /> Undo delete</Button>
         ) : null}
@@ -470,7 +581,7 @@ function PropertiesSection({
           {properties.map((property) => (
             <motion.div key={property.id} className="grid grid-cols-[1.3fr_1fr_120px_110px_170px] items-center border-b border-[var(--border)] p-4 text-[13px] font-semibold transition hover:bg-[rgba(23,166,115,0.04)]">
               <div className="flex items-center gap-3">
-                <Image src={property.image} alt="" width={48} height={48} className="h-12 w-12 rounded-[12px] object-cover" />
+                <PropertyImage src={property.image} alt="" width={48} height={48} className="h-12 w-12 rounded-[12px] object-cover" />
                 <span><strong className="block text-[14px]">{property.title}</strong><small className="text-[var(--muted)]">{property.id}</small></span>
               </div>
               <span>{property.university}</span>
@@ -489,13 +600,38 @@ function PropertiesSection({
   );
 }
 
-function PropertyForm({ property, universities, onSubmit }: { property?: AdminProperty; universities: University[]; onSubmit: (values: PropertyFormValues) => void }) {
+function PropertyForm({ property, universities, onSubmit }: { property?: AdminProperty; universities: University[]; onSubmit: (values: PropertyFormValues) => Promise<FormSubmissionResult> }) {
   const form = useForm<PropertyFormValues>({ resolver: zodResolver(propertySchema), defaultValues: valuesFromProperty(property) });
   const images = useWatch({ control: form.control, name: "images" }) ?? [];
+  const [uploadError, setUploadError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const formErrorMessage = Object.values(form.formState.errors)[0]?.message || uploadError || submitError;
 
-  function handleFiles(files: FileList | null) {
+  async function fileToDataUrl(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
-    const previews = Array.from(files).map((file) => URL.createObjectURL(file));
+    const accepted = Array.from(files).filter((file) => {
+      if (!validateImageMimeType(file.type)) {
+        setUploadError("Only JPG, PNG, and WebP images are allowed.");
+        return false;
+      }
+      if (file.size > MAX_PROPERTY_IMAGE_SIZE) {
+        setUploadError("Each image must be smaller than 8MB.");
+        return false;
+      }
+      return true;
+    });
+    if (!accepted.length) return;
+    setUploadError("");
+    const previews = await Promise.all(accepted.map(fileToDataUrl));
     form.setValue("images", [...images, ...previews], { shouldValidate: true });
   }
 
@@ -508,8 +644,22 @@ function PropertyForm({ property, universities, onSubmit }: { property?: AdminPr
     form.setValue("images", next, { shouldValidate: true });
   }
 
+  async function submitForm(values: PropertyFormValues) {
+    setSubmitError("");
+    const result = await onSubmit(values);
+    if (!result.ok) {
+      setSubmitError(result.message);
+      return;
+    }
+
+    if (result.reset) {
+      form.reset(valuesFromProperty(undefined));
+      setUploadError("");
+    }
+  }
+
   return (
-    <form className="mt-6 grid gap-5 rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]" onSubmit={form.handleSubmit(onSubmit)}>
+    <form className="mt-6 grid gap-5 rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]" onSubmit={form.handleSubmit(submitForm)}>
       <div className="grid gap-4 md:grid-cols-2">
         <Input placeholder="Property title" aria-label="Property title" {...form.register("title")} />
         <Input type="number" placeholder="Monthly rent in KGS" aria-label="Monthly rent in KGS" {...form.register("priceMonthly")} />
@@ -551,40 +701,51 @@ function PropertyForm({ property, universities, onSubmit }: { property?: AdminPr
           </label>
         ))}
       </div>
-      <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--surface)] p-5" onDrop={(event) => { event.preventDefault(); handleFiles(event.dataTransfer.files); }} onDragOver={(event) => event.preventDefault()}>
+      <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--surface)] p-5" onDrop={(event) => { event.preventDefault(); void handleFiles(event.dataTransfer.files); }} onDragOver={(event) => event.preventDefault()}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <span><strong className="flex items-center gap-2 text-[15px] font-extrabold"><Upload size={17} /> Multi-image upload</strong><small className="mt-1 block text-[12px] font-semibold text-[var(--muted)]">Drag and drop images or choose files. Reorder and remove previews.</small></span>
           <label className="focus-ring inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[13px] font-extrabold">
             <ImagePlus size={16} /> Choose images
-            <input className="sr-only" type="file" accept="image/*" multiple onChange={(event) => handleFiles(event.target.files)} />
+            <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => void handleFiles(event.target.files)} />
           </label>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {images.map((image, index) => (
-            <div key={image} className="rounded-[14px] bg-[var(--card)] p-2">
-              <Image src={image} alt="" width={220} height={140} unoptimized={image.startsWith("blob:")} className="h-28 w-full rounded-[12px] object-cover" />
+            <div key={`${image}-${index}`} className="rounded-[14px] bg-[var(--card)] p-2">
+              <PropertyImage src={image} alt="" width={220} height={140} className="h-28 w-full rounded-[12px] object-cover" />
               <div className="mt-2 flex gap-2">
                 <Button size="sm" variant="outline" type="button" onClick={() => moveImage(index, "up")}><ArrowUp size={13} /></Button>
                 <Button size="sm" variant="outline" type="button" onClick={() => moveImage(index, "down")}><ArrowDown size={13} /></Button>
-                <Button size="sm" variant="outline" type="button" onClick={() => form.setValue("images", images.filter((item) => item !== image), { shouldValidate: true })}><X size={13} /></Button>
+                <Button size="sm" variant="outline" type="button" onClick={() => form.setValue("images", images.filter((_, itemIndex) => itemIndex !== index), { shouldValidate: true })}><X size={13} /></Button>
               </div>
             </div>
           ))}
         </div>
       </div>
-      {Object.values(form.formState.errors)[0]?.message ? <p className="text-[13px] font-semibold text-[var(--muted)]">{Object.values(form.formState.errors)[0]?.message}</p> : null}
-      <Button type="submit"><Save size={17} /> Save property</Button>
+      {formErrorMessage ? <p className="text-[13px] font-semibold text-[var(--muted)]">{formErrorMessage}</p> : null}
+      <Button type="submit" disabled={form.formState.isSubmitting}>
+        {form.formState.isSubmitting ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
+        {form.formState.isSubmitting ? "Saving..." : "Save property"}
+      </Button>
     </form>
   );
 }
 
-function UniversitiesSection({ universities, setUniversities }: { universities: University[]; setUniversities: (value: University[] | ((current: University[]) => University[])) => void }) {
+function UniversitiesSection({
+  universities,
+  onSave,
+  onRemove
+}: {
+  universities: University[];
+  onSave: (university: University, editingSlug?: string) => void | Promise<void>;
+  onRemove: (university: University) => void | Promise<void>;
+}) {
   const form = useForm<z.infer<typeof universitySchema>>({ resolver: zodResolver(universitySchema), defaultValues: { name: "", city: "Jalal-Abad", apartmentCount: 0, averageRent: "15,000 сом", nearbyListings: 0 } });
   const [editing, setEditing] = useState<University | null>(null);
 
   function saveUniversity(values: z.infer<typeof universitySchema>) {
     const nextUniversity = { ...values, slug: editing?.slug ?? createSlug(values.name) };
-    setUniversities((current) => editing ? current.map((item) => item.slug === editing.slug ? nextUniversity : item) : [nextUniversity, ...current]);
+    void onSave(nextUniversity, editing?.slug);
     setEditing(null);
     form.reset({ name: "", city: "Jalal-Abad", apartmentCount: 0, averageRent: "15,000 сом", nearbyListings: 0 });
   }
@@ -609,7 +770,7 @@ function UniversitiesSection({ universities, setUniversities }: { universities: 
             <span className="mt-2 block text-[13px] font-semibold text-[var(--muted)]">{university.apartmentCount} apartments · avg {university.averageRent} · {university.nearbyListings} nearby</span>
             <div className="mt-4 flex gap-2">
               <Button size="sm" variant="outline" onClick={() => { setEditing(university); form.reset(university); }}>Edit</Button>
-              <Button size="sm" variant="outline" onClick={() => setUniversities((current) => current.filter((item) => item.slug !== university.slug))}>Remove</Button>
+              <Button size="sm" variant="outline" onClick={() => void onRemove(university)}>Remove</Button>
             </div>
           </div>
         ))}
@@ -618,25 +779,19 @@ function UniversitiesSection({ universities, setUniversities }: { universities: 
   );
 }
 
-function InquiriesSection({ properties }: { properties: AdminProperty[] }) {
-  const inquiries = [
-    { name: "Aigerim T.", apartment: properties[0], date: "2026-05-10" },
-    { name: "Omar K.", apartment: properties[1], date: "2026-05-09" },
-    { name: "Lin M.", apartment: properties[2], date: "2026-05-08" }
-  ];
-
+function InquiriesSection({ inquiries }: { inquiries: AdminInquiry[] }) {
   return (
     <section className="mt-6 rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
       <h3 className="text-[22px] font-extrabold">Messages and inquiries</h3>
       <div className="mt-5 grid gap-3">
-        {inquiries.map((inquiry) => (
-          <div key={`${inquiry.name}-${inquiry.date}`} className="grid gap-3 rounded-[16px] bg-[var(--surface)] p-4 md:grid-cols-[1fr_1fr_140px_auto] md:items-center">
+        {inquiries.length ? inquiries.map((inquiry) => (
+          <div key={inquiry.id} className="grid gap-3 rounded-[16px] bg-[var(--surface)] p-4 md:grid-cols-[1fr_1fr_140px_auto] md:items-center">
             <strong>{inquiry.name}</strong>
-            <span className="text-[13px] font-semibold text-[var(--muted)]">{inquiry.apartment?.title}</span>
+            <span className="text-[13px] font-semibold text-[var(--muted)]">{inquiry.apartmentTitle}</span>
             <span className="text-[13px] font-semibold">{inquiry.date}</span>
-            <Button asChild size="sm"><a href={inquiry.apartment ? getWhatsAppHref(inquiry.apartment) : `https://wa.me/${WHATSAPP_PHONE}`} target="_blank" rel="noreferrer"><MessageCircle size={15} /> WhatsApp</a></Button>
+            <Button asChild size="sm"><a href={`https://wa.me/${inquiry.whatsappNumber.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle size={15} /> WhatsApp</a></Button>
           </div>
-        ))}
+        )) : <div className="rounded-[16px] bg-[var(--surface)] p-4 text-[13px] font-semibold text-[var(--muted)]">No inquiries yet.</div>}
       </div>
     </section>
   );
@@ -662,38 +817,45 @@ function FeaturedSection({ properties, onToggleFeatured, onMove }: { properties:
   );
 }
 
-function UsersSection() {
-  const users = [
-    ["Aigerim T.", "Medical student", "active", "12 saves"],
-    ["Bek S.", "Landlord", "active", "4 listings"],
-    ["Admin Team", "Admin", "verified", "CMS access"],
-    ["Omar K.", "Exchange student", "active", "3 inquiries"]
-  ];
-
+function UsersSection({ users }: { users: AdminUser[] }) {
   return (
     <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {users.map(([name, role, status, activity]) => (
-        <div key={name} className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
+      {users.length ? users.map((user) => (
+        <div key={user.id} className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)]"><Users size={20} /></div>
-          <h3 className="mt-4 text-[17px] font-extrabold">{name}</h3>
-          <p className="mt-1 text-[13px] font-semibold text-[var(--muted)]">{role}</p>
+          <h3 className="mt-4 text-[17px] font-extrabold">{user.name}</h3>
+          <p className="mt-1 text-[13px] font-semibold capitalize text-[var(--muted)]">{user.role}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-extrabold">{status}</span>
-            <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-extrabold">{activity}</span>
+            <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-extrabold">{user.status}</span>
+            <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-extrabold">{user.activity}</span>
           </div>
         </div>
-      ))}
+      )) : <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 text-[13px] font-semibold text-[var(--muted)] shadow-[var(--shadow-card)]">No users found yet.</div>}
     </section>
   );
 }
 
-function SettingsSection({ activeRegions, comingSoonRegions, onToggleRegion, onSaved }: { activeRegions: Region[]; comingSoonRegions: Region[]; onToggleRegion: (region: Region) => void; onSaved: () => void }) {
-  const [settings, setSettings] = useLocalStorageValue<AdminSettings>("studentnest-admin-settings", defaultAdminSettings);
+function SettingsSection({
+  settings,
+  activeRegions,
+  comingSoonRegions,
+  onToggleRegion,
+  onSaved
+}: {
+  settings: AdminSettings;
+  activeRegions: Region[];
+  comingSoonRegions: Region[];
+  onToggleRegion: (region: Region) => void | Promise<void>;
+  onSaved: (values: AdminSettings) => void | Promise<void>;
+}) {
   const form = useForm<AdminSettings>({ resolver: zodResolver(settingsSchema), defaultValues: settings });
 
+  useEffect(() => {
+    form.reset(settings);
+  }, [form, settings]);
+
   function saveSettings(values: AdminSettings) {
-    setSettings(values);
-    onSaved();
+    void onSaved(values);
   }
 
   return (

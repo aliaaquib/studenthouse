@@ -17,10 +17,15 @@ export function formatKgs(amount: number) {
   return `${new Intl.NumberFormat("en-US").format(amount)} сом`;
 }
 
-export function getWhatsAppHref(property: Property, intent = "interested in") {
+export function normalizeWhatsAppPhone(phone: string) {
+  const normalized = phone.replace(/[^\d]/g, "");
+  return normalized || WHATSAPP_PHONE;
+}
+
+export function getWhatsAppHref(property: Property, intent = "interested in", phone = WHATSAPP_PHONE) {
   const message = `Hi, I'm ${intent} the apartment '${property.title}' listed on your student housing platform. Location: ${property.location}. Monthly rent: ${property.price}. Property ID: ${property.id}. Please share more details.`;
 
-  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${normalizeWhatsAppPhone(phone)}?text=${encodeURIComponent(message)}`;
 }
 
 export function filterProperties(properties: Property[], filters: PropertyFilters) {

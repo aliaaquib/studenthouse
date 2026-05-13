@@ -1,13 +1,16 @@
 "use client";
 
-import Image from "next/image";
-import { BadgeCheck, CalendarDays, Heart, MapPin, MessageCircle, PlayCircle, Sofa, Users, Wifi } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
+import { ArrowLeft, BadgeCheck, CalendarDays, Heart, MapPin, MessageCircle, PlayCircle, Sofa, Users, Wifi } from "lucide-react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ContactForm } from "@/components/sections/contact-form";
 import { PropertyCard } from "@/components/sections/property-card";
+import { PropertyImage } from "@/components/ui/property-image";
 import { Button } from "@/components/ui/button";
+import { trackPropertyViewAction } from "@/lib/actions/user-data";
 import { getWhatsAppHref } from "@/lib/property-utils";
+import { useAdminSettings } from "@/hooks/use-admin-settings";
 import { useSavedProperties } from "@/hooks/use-saved-properties";
 import type { Property } from "@/types/property";
 
@@ -18,29 +21,54 @@ const tourItems = [
 ];
 
 export function PropertyDetailView({ property, similarProperties }: { property: Property; similarProperties: Property[] }) {
-  const [activeImage, setActiveImage] = useState(property.images[0]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const { whatsAppPhone } = useAdminSettings();
   const { isSaved, toggleSaved } = useSavedProperties();
   const saved = isSaved(property.id);
+  const activeImage = property.images[activeIndex] ?? property.images[0];
+
+  useEffect(() => {
+    void trackPropertyViewAction(property.id);
+  }, [property.id]);
+
+  function showImage(index: number) {
+    setActiveIndex(index);
+  }
+
+  function stepImage(direction: "prev" | "next") {
+    setActiveIndex((current) => {
+      const delta = direction === "next" ? 1 : -1;
+      return (current + delta + property.images.length) % property.images.length;
+    });
+  }
 
   return (
     <section className="section-frame grid gap-10 py-12 lg:grid-cols-[1fr_372px]">
       <div>
+        <Button asChild variant="outline" className="mb-6 w-fit">
+          <Link href="/properties" aria-label="Go back to all properties">
+            <ArrowLeft size={17} /> Back
+          </Link>
+        </Button>
         <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
-          <motion.div key={activeImage} initial={{ opacity: 0.72 }} animate={{ opacity: 1 }}>
-            <Image
-              src={activeImage}
-              alt={property.name}
-              width={900}
-              height={520}
-              priority
-              sizes="(min-width: 1024px) 720px, 100vw"
-              className="h-[260px] w-full rounded-[20px] object-cover sm:h-[360px] lg:h-[430px]"
-            />
-          </motion.div>
+          <button type="button" className="focus-ring overflow-hidden rounded-[20px]" onClick={() => setPreviewOpen(true)} aria-label="Open fullscreen gallery">
+            <motion.div key={activeImage} initial={{ opacity: 0.72 }} animate={{ opacity: 1 }}>
+              <PropertyImage
+                src={activeImage}
+                alt={property.name}
+                width={900}
+                height={520}
+                priority
+                sizes="(min-width: 1024px) 720px, 100vw"
+                className="h-[260px] w-full rounded-[20px] object-cover sm:h-[360px] lg:h-[430px]"
+              />
+            </motion.div>
+          </button>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-1">
-            {property.images.slice(1, 3).map((image) => (
-              <button key={image} type="button" className="focus-ring overflow-hidden rounded-[20px]" onClick={() => setActiveImage(image)}>
-                <Image
+            {property.images.slice(1, 3).map((image, index) => (
+              <button key={image} type="button" className="focus-ring overflow-hidden rounded-[20px]" onClick={() => showImage(index + 1)}>
+                <PropertyImage
                   src={image}
                   alt=""
                   width={360}
@@ -69,7 +97,7 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
               <Heart size={18} fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save apartment"}
             </Button>
             <Button asChild>
-              <a href={getWhatsAppHref(property, "requesting a booking for")} target="_blank" rel="noreferrer">
+              <a href={getWhatsAppHref(property, "requesting a booking for", whatsAppPhone)} target="_blank" rel="noreferrer">
                 <MessageCircle size={18} /> Book Visit
               </a>
             </Button>
@@ -133,6 +161,34 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
         </div>
         <ContactForm title={`Ask about ${property.name}`} property={property} />
       </aside>
+      {previewOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <button type="button" className="focus-ring absolute right-4 top-4 rounded-full bg-white/10 px-3 py-2 text-sm text-white" onClick={() => setPreviewOpen(false)}>Close</button>
+          {property.images.length > 1 ? (
+            <>
+              <button type="button" className="focus-ring absolute left-4 rounded-full bg-white/10 px-3 py-2 text-sm text-white" onClick={() => stepImage("prev")}>Prev</button>
+              <button type="button" className="focus-ring absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-sm text-white" onClick={() => stepImage("next")}>Next</button>
+            </>
+          ) : null}
+          <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-4">
+            <PropertyImage
+              src={activeImage}
+              alt={property.name}
+              width={1200}
+              height={800}
+              sizes="100vw"
+              className="max-h-[78vh] w-full rounded-[24px] object-contain"
+            />
+            <div className="flex gap-3 overflow-x-auto">
+              {property.images.map((image, index) => (
+                <button key={`${image}-${index}`} type="button" className={`focus-ring overflow-hidden rounded-[16px] border ${index === activeIndex ? "border-white" : "border-white/20"}`} onClick={() => showImage(index)}>
+                  <PropertyImage src={image} alt="" width={110} height={80} className="h-20 w-28 object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

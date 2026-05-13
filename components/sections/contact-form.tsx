@@ -1,11 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getWhatsAppHref, WHATSAPP_PHONE } from "@/lib/property-utils";
+import { useAdminSettings } from "@/hooks/use-admin-settings";
+import { createInquiryAction } from "@/lib/actions/user-data";
+import { getWhatsAppHref } from "@/lib/property-utils";
 import type { Property } from "@/types/property";
 
 const schema = z.object({
@@ -15,14 +18,27 @@ const schema = z.object({
 });
 
 export function ContactForm({ title = "Contact landlord", property }: { title?: string; property?: Property }) {
+  const { whatsAppPhone } = useAdminSettings();
+  const [status, setStatus] = useState("");
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", email: "", message: "" }
   });
 
-  function handleInquiry() {
-    const fallbackHref = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent("Hi, I'm interested in student housing listed on your platform. Please share more details.")}`;
-    window.location.assign(property ? getWhatsAppHref(property, "requesting a booking for") : fallbackHref);
+  async function handleInquiry(values: z.infer<typeof schema>) {
+    const inquiryMessage = property
+      ? `Booking request for ${property.name}: ${values.message}`
+      : values.message;
+
+    const result = await createInquiryAction({
+      propertyId: property?.id,
+      message: inquiryMessage,
+      whatsappNumber: `+${whatsAppPhone}`
+    });
+
+    setStatus(result.ok ? "Inquiry saved. Opening WhatsApp..." : (result.message ?? ""));
+    const fallbackHref = `https://wa.me/${whatsAppPhone}?text=${encodeURIComponent("Hi, I'm interested in student housing listed on your platform. Please share more details.")}`;
+    window.location.assign(property ? getWhatsAppHref(property, "requesting a booking for", whatsAppPhone) : fallbackHref);
   }
 
   return (
@@ -44,10 +60,10 @@ export function ContactForm({ title = "Contact landlord", property }: { title?: 
       </div>
       <Button className="mt-5 w-full" type="submit">Send booking request</Button>
       <Button asChild className="mt-3 w-full" variant="outline">
-        <a href={property ? getWhatsAppHref(property, "interested in") : `https://wa.me/${WHATSAPP_PHONE}`} target="_blank" rel="noreferrer">WhatsApp landlord</a>
+        <a href={property ? getWhatsAppHref(property, "interested in", whatsAppPhone) : `https://wa.me/${whatsAppPhone}`} target="_blank" rel="noreferrer">WhatsApp landlord</a>
       </Button>
       <div className="mt-3 text-[14px] font-medium text-[var(--muted)]">
-        {Object.values(form.formState.errors)[0]?.message ?? "Secure communication. No phone number shared until you choose."}
+        {Object.values(form.formState.errors)[0]?.message ?? (status || "Secure communication. No phone number shared until you choose.")}
       </div>
     </form>
   );

@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useTheme } from "@/hooks/use-theme";
 import { useTypingWords } from "@/hooks/use-typing-words";
 import { assets } from "@/lib/assets";
@@ -29,6 +30,7 @@ export function Header() {
   const [query, setQuery] = useState("");
   const scrollStopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isDark, toggleTheme } = useTheme();
+  const { profile, supabase } = useAuth();
   const typedWord = useTypingWords(searchWords);
 
   useEffect(() => {
@@ -63,6 +65,12 @@ export function Header() {
     setSearchOpen(false);
     setOpen(false);
     router.push(`/search?${params.toString()}`);
+  }
+
+  async function handleLogout() {
+    await supabase?.auth.signOut();
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -145,12 +153,25 @@ export function Header() {
           >
             {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-          <Button asChild variant="outline">
-            <Link href="/auth/login">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/auth/signup">Sign up</Link>
-          </Button>
+          {profile ? (
+            <>
+              <Button asChild variant="outline">
+                <Link href={profile.role === "admin" ? "/admin/dashboard" : "/dashboard"}>
+                  {profile.role === "admin" ? "Admin" : "Dashboard"}
+                </Link>
+              </Button>
+              <Button type="button" onClick={handleLogout}>Logout</Button>
+            </>
+          ) : (
+            <>
+              <Button asChild variant="outline">
+                <Link href="/auth/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/auth/signup">Sign up</Link>
+              </Button>
+            </>
+          )}
         </div>
         {!searchOpen ? <Button
           variant="ghost"
@@ -185,12 +206,27 @@ export function Header() {
               <Button type="button" variant="outline" size="sm" onClick={toggleTheme}>
                 {isDark ? <Sun size={16} /> : <Moon size={16} />} Theme
               </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/auth/login" onClick={() => setOpen(false)}>Login</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link href="/auth/signup" onClick={() => setOpen(false)}>Sign up</Link>
-              </Button>
+              {profile ? (
+                <>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={profile.role === "admin" ? "/admin/dashboard" : "/dashboard"} onClick={() => setOpen(false)}>
+                      {profile.role === "admin" ? "Admin" : "Dashboard"}
+                    </Link>
+                  </Button>
+                  <Button size="sm" type="button" onClick={() => { void handleLogout(); setOpen(false); }}>
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/auth/login" onClick={() => setOpen(false)}>Login</Link>
+                  </Button>
+                  <Button asChild size="sm">
+                    <Link href="/auth/signup" onClick={() => setOpen(false)}>Sign up</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </motion.div>

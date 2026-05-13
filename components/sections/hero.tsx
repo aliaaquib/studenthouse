@@ -9,26 +9,16 @@ import { useRouter } from "next/navigation";
 import { MotionDiv } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { assets } from "@/lib/assets";
-import { properties } from "@/lib/data";
 import { PropertyCard } from "@/components/sections/property-card";
 import { useTypingWords } from "@/hooks/use-typing-words";
-
-const cityOptions = [
-  { name: "Jalal-Abad", status: "active" },
-  { name: "Bishkek", status: "coming-soon" },
-  { name: "Osh", status: "coming-soon" },
-  { name: "Karakol", status: "coming-soon" },
-  { name: "Kant", status: "coming-soon" },
-  { name: "Naryn", status: "coming-soon" },
-  { name: "Talas", status: "coming-soon" },
-  { name: "Batken", status: "coming-soon" }
-] as const;
+import type { Property, Region } from "@/types/property";
 
 const searchWords = ["area", "city", "property", "university"];
 const heroWords = ["Room", "Apartment", "House"];
 
-export function Hero() {
+export function Hero({ properties, activeRegions, comingSoonRegions }: { properties: Property[]; activeRegions: Region[]; comingSoonRegions: Region[] }) {
   const router = useRouter();
+  const cityOptions = [...activeRegions, ...comingSoonRegions];
   const [selectedCity, setSelectedCity] = useState("Jalal-Abad");
   const [query, setQuery] = useState("");
   const [citiesOpen, setCitiesOpen] = useState(false);
@@ -60,12 +50,14 @@ export function Hero() {
   function handleSearch(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
 
-    if (selectedCity !== "Jalal-Abad") {
+    const selectedRegion = cityOptions.find((option) => option.name === selectedCity);
+
+    if (selectedRegion?.status === "coming-soon") {
       setComingSoonCity(selectedCity);
       return;
     }
 
-    const params = new URLSearchParams({ region: "Jalal-Abad" });
+    const params = new URLSearchParams({ region: selectedCity });
     if (query.trim()) params.set("q", query.trim());
     router.push(`/search?${params.toString()}`);
   }
@@ -209,7 +201,7 @@ export function Hero() {
             <PropertyCard property={properties[0]} priority />
           </div>
           <div className="absolute bottom-5 right-0 w-[218px]">
-            <PropertyCard property={properties[1]} compact />
+            <PropertyCard property={properties[1] ?? properties[0]} compact />
           </div>
           <div className="absolute right-[138px] top-[270px] flex h-16 w-14 items-center justify-center">
             <div className="absolute bottom-0 h-4 w-4 rounded-full bg-[var(--primary)]" />

@@ -18,7 +18,7 @@ const filterSchema = z.object({
   utilities: z.enum(["Any", "Included", "Separate"]),
   genderPreference: z.enum(["Any", "Female only", "Male only", "Mixed"]),
   university: z.string(),
-  region: z.enum(["Any", "Jalal-Abad"])
+  region: z.string()
 });
 
 const selectClassName = "focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-normal";
