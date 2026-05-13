@@ -23,7 +23,8 @@ function getInitialFilters(params: Partial<Record<keyof PropertyFilters | "type"
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Partial<Record<keyof PropertyFilters | "type" | "city" | "q", string>>> }) {
   const params = await searchParams;
   const initialFilters = getInitialFilters(params);
-  const [properties, regions] = await Promise.all([getPublicProperties(initialFilters), getRegions()]);
+  const serverFilters = { ...initialFilters, query: "" };
+  const [properties, regions] = await Promise.all([getPublicProperties(serverFilters), getRegions()]);
 
   return (
     <PageChrome>

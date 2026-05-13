@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { MapPin, SearchX } from "lucide-react";
+import { MapPin, SearchX, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeUpVariants, staggerContainer } from "@/components/motion";
 import { PropertyCard } from "@/components/sections/property-card";
@@ -10,7 +10,7 @@ import { PropertyFilters } from "@/components/sections/property-filters";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trackSearchAction } from "@/lib/actions/user-data";
-import { defaultFilters, filterProperties } from "@/lib/property-utils";
+import { defaultFilters, smartSearchProperties } from "@/lib/property-utils";
 import type { Property, PropertyFilters as PropertyFiltersValue, Region } from "@/types/property";
 
 const pinClasses = [
@@ -42,7 +42,8 @@ export function PropertyExplorer({
   const [resetKey, setResetKey] = useState(0);
   const [isPending, startTransition] = useTransition();
   const universities = useMemo(() => Array.from(new Set(properties.map((property) => property.university))), [properties]);
-  const filteredProperties = useMemo(() => filterProperties(properties, filters).slice(0, limit), [filters, limit, properties]);
+  const searchState = useMemo(() => smartSearchProperties(properties, filters), [filters, properties]);
+  const filteredProperties = useMemo(() => searchState.properties.slice(0, limit), [limit, searchState.properties]);
 
   const handleFiltersChange = useCallback((nextFilters: PropertyFiltersValue) => {
     startTransition(() => setFilters(nextFilters));
@@ -88,6 +89,22 @@ export function PropertyExplorer({
         onSearchSubmit={syncSearchUrl}
         initialFilters={filters}
       />
+      {!isPending && searchState.mode === "nearby" ? (
+        <div className="mt-5 rounded-[18px] border border-[var(--border)] bg-[var(--card)] px-5 py-4 shadow-[var(--shadow-card)]">
+          <p className="text-[16px] font-semibold">No exact apartments found in {searchState.displayQuery}.</p>
+          <p className="mt-1 text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
+            Showing nearby student housing instead{searchState.nearbyLabel ? ` around ${searchState.nearbyLabel}.` : "."}
+          </p>
+        </div>
+      ) : null}
+      {!isPending && searchState.mode === "recommended" ? (
+        <div className="mt-5 rounded-[18px] border border-[var(--border)] bg-[var(--card)] px-5 py-4 shadow-[var(--shadow-card)]">
+          <p className="flex items-center gap-2 text-[16px] font-semibold"><Sparkles size={16} color="var(--primary)" /> No exact apartments found in {searchState.displayQuery}.</p>
+          <p className="mt-1 text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
+            Showing recommended student housing that still matches your filters.
+          </p>
+        </div>
+      ) : null}
       {isPending ? (
         <div className="mt-8 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((item) => <Skeleton key={item} className="h-[506px]" />)}
@@ -112,7 +129,7 @@ export function PropertyExplorer({
           <SearchX className="mx-auto text-[var(--primary)]" size={34} />
           <h2 className="mt-4 text-[22px] font-semibold">No apartments found</h2>
           <p className="mx-auto mt-2 max-w-[420px] text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
-            Try a different university, budget, room type, or roommate preference.
+            Try a different location, university, budget, room type, or roommate preference.
           </p>
           <Button className="mt-5" variant="outline" onClick={clearFilters}>Clear filters</Button>
         </div>

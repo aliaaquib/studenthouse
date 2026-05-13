@@ -21,7 +21,8 @@ function getInitialFilters(params: Partial<Record<keyof PropertyFilters | "q", s
 export default async function PropertiesPage({ searchParams }: { searchParams: Promise<Partial<Record<keyof PropertyFilters | "q", string>>> }) {
   const params = await searchParams;
   const initialFilters = getInitialFilters(params);
-  const [properties, regions] = await Promise.all([getPublicProperties(initialFilters), getRegions()]);
+  const serverFilters = { ...initialFilters, query: "" };
+  const [properties, regions] = await Promise.all([getPublicProperties(serverFilters), getRegions()]);
 
   return (
     <PageChrome>
