@@ -6,7 +6,7 @@ export async function updateSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const { url, anonKey } = getSupabaseConfig();
 
-  if (!url || !anonKey) return { response, supabase: null };
+  if (!url || !anonKey) return { response, supabase: null, error: null as Error | null };
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
@@ -21,6 +21,14 @@ export async function updateSupabaseSession(request: NextRequest) {
     }
   });
 
-  await supabase.auth.getUser();
-  return { response, supabase };
+  try {
+    await supabase.auth.getUser();
+    return { response, supabase, error: null as Error | null };
+  } catch (error) {
+    return {
+      response,
+      supabase: null,
+      error: error instanceof Error ? error : new Error("Unable to refresh Supabase session")
+    };
+  }
 }

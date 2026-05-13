@@ -18,14 +18,43 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === "/dashboard" ||
     request.nextUrl.pathname === "/favorites" ||
     request.nextUrl.pathname === "/saved";
+  const isProtectedRoute = isAdminRoute || isAdminApiRoute || isAgentRoute || isUserProtectedRoute;
 
-  const { response, supabase } = await updateSupabaseSession(request);
+  const { response, supabase, error } = await updateSupabaseSession(request);
 
-  if (!supabase) return response;
+  if (!supabase) {
+    if (!isProtectedRoute) {
+      return response;
+    }
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+    if (isAdminApiRoute) {
+      return NextResponse.json(
+        { error: error?.message ?? "Authentication service unavailable" },
+        { status: 503 }
+      );
+    }
+
+    return redirectToLogin(request);
+  }
+
+  let user = null;
+
+  try {
+    const {
+      data: { user: currentUser }
+    } = await supabase.auth.getUser();
+    user = currentUser;
+  } catch {
+    if (!isProtectedRoute) {
+      return response;
+    }
+
+    if (isAdminApiRoute) {
+      return NextResponse.json({ error: "Authentication service unavailable" }, { status: 503 });
+    }
+
+    return redirectToLogin(request);
+  }
 
   if (isUserProtectedRoute && !user) {
     return redirectToLogin(request);
@@ -40,7 +69,20 @@ export async function middleware(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  const profile = await getProfileForUser(supabase, user);
+  let profile = null;
+  try {
+    profile = await getProfileForUser(supabase, user);
+  } catch {
+    if (isAdminApiRoute) {
+      return NextResponse.json({ error: "Unable to verify profile permissions" }, { status: 503 });
+    }
+
+    if (isProtectedRoute) {
+      return redirectToLogin(request);
+    }
+
+    return response;
+  }
 
   if ((isAdminRoute || isAdminApiRoute) && !canAccessAdmin(profile?.role)) {
     if (isAdminApiRoute) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
