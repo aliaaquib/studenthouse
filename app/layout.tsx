@@ -5,6 +5,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { AdminSettingsProvider } from "@/components/providers/admin-settings-provider";
 import { MotionProvider } from "@/components/providers/motion-provider";
+import { SavedPropertiesProvider } from "@/components/providers/saved-properties-provider";
 import { getPlatformSettings } from "@/lib/db/queries";
 import "./globals.css";
 
@@ -59,7 +60,9 @@ export default async function RootLayout({
       <body className={plusJakarta.variable}>
         <MotionProvider>
           <AuthProvider>
-            <AdminSettingsProvider settings={settings}>{children}</AdminSettingsProvider>
+            <SavedPropertiesProvider>
+              <AdminSettingsProvider settings={settings}>{children}</AdminSettingsProvider>
+            </SavedPropertiesProvider>
           </AuthProvider>
         </MotionProvider>
       </body>

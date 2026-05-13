@@ -40,24 +40,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let alive = true;
     const client = supabase;
+    let lastProfileUserId: string | null = null;
 
     async function loadProfile(nextUser: User | null) {
       if (!nextUser) {
         if (!alive) return;
         setProfile(null);
         setResolved(true);
+        lastProfileUserId = null;
         return;
       }
 
-      const { data } = await client
+      if (lastProfileUserId === nextUser.id) {
+        if (!alive) return;
+        setResolved(true);
+        return;
+      }
+
+      const fallbackProfile: AuthProfile = {
+        id: nextUser.id,
+        email: nextUser.email ?? "",
+        full_name: (nextUser.user_metadata?.full_name as string | undefined) ?? null,
+        role: "student"
+      };
+
+      const { data, error } = await client
         .from("profiles")
         .select("id, email, full_name, role")
         .eq("id", nextUser.id)
         .maybeSingle();
 
       if (!alive) return;
-      setProfile((data as AuthProfile | null) ?? null);
+      setProfile(error ? fallbackProfile : ((data as AuthProfile | null) ?? fallbackProfile));
       setResolved(true);
+      lastProfileUserId = nextUser.id;
     }
 
     client.auth.getSession().then(({ data }) => {
@@ -69,9 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription }
-    } = client.auth.onAuthStateChange((_event, nextSession) => {
+    } = client.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
+      if (event === "TOKEN_REFRESHED" && nextSession?.user?.id === lastProfileUserId) {
+        setResolved(true);
+        return;
+      }
       setResolved(false);
       void loadProfile(nextSession?.user ?? null);
     });

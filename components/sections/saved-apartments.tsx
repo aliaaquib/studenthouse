@@ -4,12 +4,16 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeUpVariants, staggerContainer } from "@/components/motion";
+import { useSavedProperties } from "@/hooks/use-saved-properties";
 import { PropertyCard } from "@/components/sections/property-card";
 import { Button } from "@/components/ui/button";
 import type { Property } from "@/types/property";
 
 export function SavedApartments({ properties }: { properties: Property[] }) {
-  if (properties.length === 0) {
+  const { savedSet, loading } = useSavedProperties();
+  const visibleProperties = loading ? properties : properties.filter((property) => savedSet.has(property.id));
+
+  if (!loading && visibleProperties.length === 0) {
     return (
       <section className="section-frame py-12">
         <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-8 text-center shadow-[var(--shadow-card)]">
@@ -33,7 +37,7 @@ export function SavedApartments({ properties }: { properties: Property[] }) {
       animate="show"
       variants={staggerContainer}
     >
-      {properties.map((property) => (
+      {visibleProperties.map((property) => (
         <motion.div key={property.id} variants={fadeUpVariants}>
           <PropertyCard property={property} />
         </motion.div>

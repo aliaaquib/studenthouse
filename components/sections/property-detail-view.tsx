@@ -24,8 +24,9 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
   const [activeIndex, setActiveIndex] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const { whatsAppPhone } = useAdminSettings();
-  const { isSaved, toggleSaved } = useSavedProperties();
+  const { isSaved, isPending, toggleSaved } = useSavedProperties();
   const saved = isSaved(property.id);
+  const pendingFavorite = isPending(property.id);
   const activeImage = property.images[activeIndex] ?? property.images[0];
 
   useEffect(() => {
@@ -93,7 +94,7 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
             <p className="mt-2 text-[13px] font-medium text-[var(--muted)]">Property ID: {property.id} · Available {property.availabilityDate}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
-            <Button type="button" variant="outline" onClick={() => toggleSaved(property.id)}>
+            <Button type="button" variant="outline" disabled={pendingFavorite} onClick={() => void toggleSaved(property.id)}>
               <Heart size={18} fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save apartment"}
             </Button>
             <Button asChild>

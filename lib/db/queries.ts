@@ -305,8 +305,22 @@ export async function getCurrentFavoriteIds() {
 
 export async function getFavoritePropertiesForCurrentUser() {
   const favoriteIds = await getCurrentFavoriteIds();
-  const properties = await getPublicProperties();
-  return properties.filter((property) => favoriteIds.includes(property.id));
+  if (!favoriteIds.length) return [] as Property[];
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [] as Property[];
+
+  const { data, error } = await supabase
+    .from("properties")
+    .select(propertySelect)
+    .in("id", favoriteIds)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [] as Property[];
+
+  const mapped = (data as DbProperty[]).map(mapDbProperty);
+  const order = new Map(favoriteIds.map((id, index) => [id, index]));
+  return mapped.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 }
 
 export async function getStudentDashboardData() {
@@ -316,7 +330,8 @@ export async function getStudentDashboardData() {
       savedProperties: [] as Property[],
       inquiryHistory: [] as string[],
       recentSearches: [] as string[],
-      viewedProperties: [] as Property[]
+      viewedProperties: [] as Property[],
+      profile: null as { fullName: string | null; email: string } | null
     };
   }
 
@@ -329,11 +344,12 @@ export async function getStudentDashboardData() {
       savedProperties: [] as Property[],
       inquiryHistory: [] as string[],
       recentSearches: [] as string[],
-      viewedProperties: [] as Property[]
+      viewedProperties: [] as Property[],
+      profile: null as { fullName: string | null; email: string } | null
     };
   }
 
-  const [savedProperties, inquiriesResult, searchesResult, recentViewsResult, allProperties] = await Promise.all([
+  const [savedProperties, inquiriesResult, searchesResult, recentViewsResult] = await Promise.all([
     getFavoritePropertiesForCurrentUser(),
     supabase
       .from("inquiries")
@@ -352,14 +368,21 @@ export async function getStudentDashboardData() {
       .select("property_id, viewed_at")
       .eq("user_id", user.id)
       .order("viewed_at", { ascending: false })
-      .limit(5),
-    getPublicProperties()
+      .limit(5)
   ]);
 
   const viewedIds = (recentViewsResult.data as RecentViewRow[] | null)?.map((item) => item.property_id) ?? [];
-  const viewedProperties = viewedIds
-    .map((id) => allProperties.find((property) => property.id === id))
-    .filter(Boolean) as Property[];
+  let viewedProperties: Property[] = [];
+  if (viewedIds.length) {
+    const { data: viewedData } = await supabase
+      .from("properties")
+      .select(propertySelect)
+      .in("id", viewedIds);
+
+    const mappedViewed = ((viewedData as DbProperty[] | null) ?? []).map(mapDbProperty);
+    const viewedOrder = new Map(viewedIds.map((id, index) => [id, index]));
+    viewedProperties = mappedViewed.sort((a, b) => (viewedOrder.get(a.id) ?? 0) - (viewedOrder.get(b.id) ?? 0));
+  }
 
   return {
     savedProperties,
@@ -367,7 +390,11 @@ export async function getStudentDashboardData() {
     recentSearches: ((searchesResult.data as SearchHistoryRow[] | null) ?? []).map((item) =>
       [item.query, item.region, item.university, item.room_type].filter(Boolean).join(" · ")
     ),
-    viewedProperties
+    viewedProperties,
+    profile: {
+      fullName: user.user_metadata?.full_name ?? null,
+      email: user.email ?? ""
+    }
   };
 }
 

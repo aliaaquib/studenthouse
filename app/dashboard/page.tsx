@@ -23,6 +23,7 @@ export default async function DashboardPage() {
         recentSearches={data.recentSearches}
         inquiryHistory={data.inquiryHistory}
         viewedProperties={data.viewedProperties}
+        profile={data.profile}
       />
     </PageChrome>
   );

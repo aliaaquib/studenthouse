@@ -51,7 +51,7 @@ export function AuthForm({
 
     try {
       if (mode === "signup") {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { error: signUpError, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -66,8 +66,13 @@ export function AuthForm({
           return;
         }
 
-        router.push("/dashboard");
-        router.refresh();
+        if (data.session) {
+          router.replace("/dashboard");
+          router.refresh();
+          return;
+        }
+
+        router.replace("/login?mode=login");
         return;
       }
 
@@ -91,7 +96,7 @@ export function AuthForm({
         return;
       }
 
-      router.push(nextPath);
+      router.replace(nextPath);
       router.refresh();
     } finally {
       setPending(false);

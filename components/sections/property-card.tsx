@@ -15,8 +15,9 @@ import { useSavedProperties } from "@/hooks/use-saved-properties";
 export function PropertyCard({ property, compact = false, priority = false }: { property: Property; compact?: boolean; priority?: boolean }) {
   const router = useRouter();
   const { whatsAppPhone } = useAdminSettings();
-  const { isSaved, toggleSaved } = useSavedProperties();
+  const { isSaved, isPending, toggleSaved } = useSavedProperties();
   const saved = isSaved(property.id);
+  const pending = isPending(property.id);
   const propertyHref = `/properties/${property.slug}`;
 
   return (
@@ -62,12 +63,13 @@ export function PropertyCard({ property, compact = false, priority = false }: { 
           aria-label={saved ? `Remove ${property.name} from saved apartments` : `Save ${property.name}`}
           aria-pressed={saved}
           type="button"
+          disabled={pending}
           onClick={(event) => {
             event.stopPropagation();
             void toggleSaved(property.id);
           }}
         >
-          <motion.span animate={{ scale: saved ? [1, 1.12, 1] : 1 }} transition={{ duration: 0.22, ease: motionEase }}>
+          <motion.span animate={{ scale: saved ? [1, 1.12, 1] : 1, opacity: pending ? 0.65 : 1 }} transition={{ duration: 0.22, ease: motionEase }}>
             <Heart size={compact ? 18 : 22} fill={saved ? "currentColor" : "none"} />
           </motion.span>
         </button>

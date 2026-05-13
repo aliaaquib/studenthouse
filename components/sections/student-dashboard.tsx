@@ -2,26 +2,33 @@
 
 import Link from "next/link";
 import { CalendarDays, Heart, Home, MessageSquare, Search, Settings } from "lucide-react";
+import { useSavedProperties } from "@/hooks/use-saved-properties";
 import { PropertyCard } from "@/components/sections/property-card";
-import { Input } from "@/components/ui/input";
 import type { Property } from "@/types/property";
 
 export function StudentDashboard({
   savedProperties,
   recentSearches,
   inquiryHistory,
-  viewedProperties
+  viewedProperties,
+  profile
 }: {
   savedProperties: Property[];
   recentSearches: string[];
   inquiryHistory: string[];
   viewedProperties: Property[];
+  profile: {
+    fullName: string | null;
+    email: string;
+  } | null;
 }) {
+  const { savedSet, loading } = useSavedProperties();
+  const visibleSavedProperties = loading ? savedProperties : savedProperties.filter((property) => savedSet.has(property.id));
   const metrics = [
-    { icon: Heart, value: String(savedProperties.length), label: "Saved apartments" },
-    { icon: CalendarDays, value: "4", label: "Tours booked" },
-    { icon: MessageSquare, value: "8", label: "Landlord chats" },
-    { icon: Home, value: "2", label: "Applications" }
+    { icon: Heart, value: String(visibleSavedProperties.length), label: "Saved apartments" },
+    { icon: CalendarDays, value: String(viewedProperties.length), label: "Viewed recently" },
+    { icon: MessageSquare, value: String(inquiryHistory.length), label: "Landlord inquiries" },
+    { icon: Home, value: String(recentSearches.length), label: "Recent searches" }
   ];
 
   return (
@@ -41,9 +48,21 @@ export function StudentDashboard({
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div>
           <h2 className="text-[22px] font-semibold leading-[1.4]">Saved apartments</h2>
-          <div className="mt-6 grid gap-8 md:grid-cols-2">
-            {(savedProperties.length ? savedProperties : viewedProperties.slice(0, 2)).map((property) => <PropertyCard key={property.id} property={property} />)}
-          </div>
+          {visibleSavedProperties.length ? (
+            <div className="mt-6 grid gap-8 md:grid-cols-2">
+              {visibleSavedProperties.map((property) => <PropertyCard key={property.id} property={property} />)}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
+              <h3 className="text-[18px] font-semibold">No saved apartments yet</h3>
+              <p className="mt-2 text-[14px] font-normal leading-[1.7] text-[var(--muted)]">
+                Start exploring student housing and tap the heart on any property to save it here.
+              </p>
+              <Link href="/properties" className="mt-4 inline-flex text-[14px] font-medium text-[var(--primary)]">
+                View apartments
+              </Link>
+            </div>
+          )}
         </div>
         <aside className="grid gap-5 self-start">
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
@@ -55,14 +74,20 @@ export function StudentDashboard({
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
             <h2 className="flex items-center gap-2 text-[18px] font-semibold"><MessageSquare size={18} color="var(--primary)" /> Inquiry history</h2>
             <ul className="mt-4 space-y-3 text-[13px] font-normal text-[var(--muted)]">
-              {inquiryHistory.length ? inquiryHistory.map((item) => <li key={item}>{item}</li>) : <li>No inquiries yet.</li>}
+              {inquiryHistory.length ? inquiryHistory.map((item) => <li key={item}>{item}</li>) : <li>You haven&apos;t contacted any landlords yet.</li>}
             </ul>
           </div>
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
             <h2 className="flex items-center gap-2 text-[18px] font-semibold"><Settings size={18} color="var(--primary)" /> Profile settings</h2>
             <div className="mt-4 grid gap-3">
-              <Input aria-label="Preferred university" placeholder="Preferred university" defaultValue="JAIU" />
-              <Input aria-label="Monthly budget" placeholder="Monthly budget" defaultValue="15,000 сом" />
+              <div className="rounded-[14px] bg-[var(--surface)] p-3">
+                <p className="text-[12px] font-medium uppercase tracking-[0.06em] text-[var(--muted)]">Name</p>
+                <p className="mt-2 text-[14px] font-medium text-[var(--muted-strong)]">{profile?.fullName || "Complete your profile"}</p>
+              </div>
+              <div className="rounded-[14px] bg-[var(--surface)] p-3">
+                <p className="text-[12px] font-medium uppercase tracking-[0.06em] text-[var(--muted)]">Email</p>
+                <p className="mt-2 text-[14px] font-medium text-[var(--muted-strong)]">{profile?.email || "No email available"}</p>
+              </div>
             </div>
           </div>
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
