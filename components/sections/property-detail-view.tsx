@@ -153,13 +153,10 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
           </div>
         ) : null}
       </div>
-      <aside className="lg:sticky lg:top-28 lg:self-start">
-        <div className="mb-5 rounded-[18px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">Landlord</p>
-          <h2 className="mt-2 text-[20px] font-semibold">{property.agent}</h2>
-          <p className="mt-2 text-[13px] font-normal leading-[1.6] text-[var(--muted)]">Verified housing partner for {property.university} students.</p>
-        </div>
+      <aside className="lg:self-start">
+        <div className="lg:sticky lg:top-28">
         <ContactForm title={`Ask about ${property.name}`} property={property} />
+        </div>
       </aside>
       {previewOpen ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">

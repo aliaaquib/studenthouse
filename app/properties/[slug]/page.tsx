@@ -7,7 +7,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
   const properties = await getPublicProperties();
 
   return (
-    <PageChrome>
+    <PageChrome className="overflow-visible">
       <PropertyDetailResolver slug={slug} properties={properties} />
     </PageChrome>
   );

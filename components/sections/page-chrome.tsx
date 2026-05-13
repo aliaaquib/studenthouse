@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/sections/footer";
 import { Header } from "@/components/sections/header";
 
-export function PageChrome({ children }: { children: ReactNode }) {
+export function PageChrome({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className="figma-shell min-h-screen">
+    <div className={`figma-shell min-h-screen ${className}`.trim()}>
       <Header />
       <main>{children}</main>
       <Footer />
