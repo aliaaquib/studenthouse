@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getProfileForUser } from "@/lib/auth/profile";
+import { canAccessAdmin, canAccessAgentDashboard } from "@/lib/rbac";
 import { updateSupabaseSession } from "@/lib/supabase/middleware";
 
 function redirectToLogin(request: NextRequest) {
@@ -11,6 +13,7 @@ function redirectToLogin(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname === "/admin" || request.nextUrl.pathname.startsWith("/admin/");
   const isAdminApiRoute = request.nextUrl.pathname.startsWith("/api/admin/");
+  const isAgentRoute = request.nextUrl.pathname === "/agent" || request.nextUrl.pathname.startsWith("/agent/");
   const isUserProtectedRoute =
     request.nextUrl.pathname === "/dashboard" ||
     request.nextUrl.pathname === "/favorites" ||
@@ -28,7 +31,7 @@ export async function middleware(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  if (!isAdminRoute && !isAdminApiRoute) {
+  if (!isAdminRoute && !isAdminApiRoute && !isAgentRoute) {
     return response;
   }
 
@@ -37,14 +40,14 @@ export async function middleware(request: NextRequest) {
     return redirectToLogin(request);
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
+  const profile = await getProfileForUser(supabase, user);
 
-  if (profile?.role !== "admin") {
+  if ((isAdminRoute || isAdminApiRoute) && !canAccessAdmin(profile?.role)) {
     if (isAdminApiRoute) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (isAgentRoute && !canAccessAgentDashboard(profile?.role)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

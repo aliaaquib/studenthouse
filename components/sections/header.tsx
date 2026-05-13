@@ -20,6 +20,16 @@ const navItems = [
 
 const searchWords = ["area", "city", "property", "university"];
 
+function getDashboardTarget(role?: string | null) {
+  if (role === "admin") {
+    return { href: "/admin/dashboard", label: "Admin" };
+  }
+  if (role === "agent") {
+    return { href: "/agent", label: "Agent" };
+  }
+  return { href: "/dashboard", label: "Dashboard" };
+}
+
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,6 +42,7 @@ export function Header() {
   const { isDark, toggleTheme } = useTheme();
   const { profile, supabase } = useAuth();
   const typedWord = useTypingWords(searchWords);
+  const dashboardTarget = getDashboardTarget(profile?.role);
 
   useEffect(() => {
     function showAfterScrollStops() {
@@ -75,10 +86,10 @@ export function Header() {
 
   return (
     <>
-    <header className={`fixed left-0 right-0 top-0 z-50 mx-auto w-full max-w-[1440px] border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_88%,transparent)] backdrop-blur-2xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${hidden && !open && !searchOpen ? "-translate-y-full" : "translate-y-0"}`}>
+    <header className={`theme-transition fixed left-0 right-0 top-0 z-50 mx-auto w-full max-w-[1440px] border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_88%,transparent)] backdrop-blur-2xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${hidden && !open && !searchOpen ? "-translate-y-full" : "translate-y-0"}`}>
       <div className={`relative mx-auto flex h-18 max-w-[1440px] items-center px-5 py-4 md:h-20 lg:px-10 ${searchOpen ? "justify-center" : "justify-between"}`}>
         {searchOpen ? (
-          <form className="flex h-11 min-w-0 w-full max-w-[620px] items-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-card)]" onSubmit={handleSearch}>
+          <form className="theme-transition motion-surface flex h-11 min-w-0 w-full max-w-[620px] items-center overflow-hidden rounded-full border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-card)]" onSubmit={handleSearch}>
             <span className="hidden h-full shrink-0 items-center border-r border-[var(--border)] px-4 text-[13px] font-medium text-[var(--foreground)] sm:flex">Jalal-Abad</span>
             <label className="relative flex min-w-0 flex-1 items-center px-3">
               <Search size={16} className="mr-2 shrink-0 text-[var(--primary)]" />
@@ -156,9 +167,7 @@ export function Header() {
           {profile ? (
             <>
               <Button asChild variant="outline">
-                <Link href={profile.role === "admin" ? "/admin/dashboard" : "/dashboard"}>
-                  {profile.role === "admin" ? "Admin" : "Dashboard"}
-                </Link>
+                <Link href={dashboardTarget.href}>{dashboardTarget.label}</Link>
               </Button>
               <Button type="button" onClick={handleLogout}>Logout</Button>
             </>
@@ -188,10 +197,10 @@ export function Header() {
       {open ? (
         <motion.div
           className="border-t border-[var(--border)] bg-[var(--background)] px-5 py-4 shadow-[0_18px_36px_rgba(14,8,84,0.08)] xl:hidden"
-          initial={{ opacity: 0, y: -12 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.18 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
         >
           <nav className="mx-auto grid max-w-[720px] gap-3 text-[15px] font-medium" aria-label="Mobile navigation">
             {navItems.map((item) => {
@@ -209,9 +218,7 @@ export function Header() {
               {profile ? (
                 <>
                   <Button asChild variant="outline" size="sm">
-                    <Link href={profile.role === "admin" ? "/admin/dashboard" : "/dashboard"} onClick={() => setOpen(false)}>
-                      {profile.role === "admin" ? "Admin" : "Dashboard"}
-                    </Link>
+                    <Link href={dashboardTarget.href} onClick={() => setOpen(false)}>{dashboardTarget.label}</Link>
                   </Button>
                   <Button size="sm" type="button" onClick={() => { void handleLogout(); setOpen(false); }}>
                     Logout

@@ -21,7 +21,7 @@ export function Listings({ properties }: { properties: Property[] }) {
           </h2>
           <Link
             href="/properties"
-            aria-label="Browse all apartments"
+            aria-label="View all apartments"
             className="focus-ring mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_12px_28px_rgba(23,166,115,0.22)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-light)]"
           >
             <ArrowRight size={22} className="text-white" />
@@ -37,7 +37,7 @@ export function Listings({ properties }: { properties: Property[] }) {
             </h2>
           </div>
           <Button asChild size="lg">
-            <Link href="/properties">Browse all apartments</Link>
+            <Link href="/properties">View all apartments</Link>
           </Button>
         </div>
 

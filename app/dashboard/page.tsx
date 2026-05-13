@@ -1,10 +1,18 @@
+import { redirect } from "next/navigation";
 import { PageChrome, PageIntro } from "@/components/sections/page-chrome";
 import { StudentDashboard } from "@/components/sections/student-dashboard";
 import { requireUser } from "@/lib/auth/guards";
 import { getStudentDashboardData } from "@/lib/db/queries";
 
 export default async function DashboardPage() {
-  await requireUser("/dashboard");
+  const session = await requireUser("/dashboard");
+  if (session.role === "admin") {
+    redirect("/admin/dashboard");
+  }
+  if (session.role === "agent") {
+    redirect("/agent");
+  }
+
   const data = await getStudentDashboardData();
 
   return (

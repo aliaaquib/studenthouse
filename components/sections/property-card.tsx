@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import type { Property } from "@/types/property";
 import { Card } from "@/components/ui/card";
 import { PropertyImage } from "@/components/ui/property-image";
+import { motionEase } from "@/components/motion";
 import { getWhatsAppHref } from "@/lib/property-utils";
 import { useAdminSettings } from "@/hooks/use-admin-settings";
 import { useSavedProperties } from "@/hooks/use-saved-properties";
@@ -19,9 +20,9 @@ export function PropertyCard({ property, compact = false, priority = false }: { 
   const propertyHref = `/properties/${property.slug}`;
 
   return (
-    <motion.div whileHover={{ y: compact ? -2 : -4 }} transition={{ duration: 0.22 }}>
+    <motion.div whileHover={{ y: compact ? -2 : -4 }} whileTap={{ scale: 0.995 }} transition={{ duration: 0.22, ease: motionEase }}>
       <Card
-        className={compact ? "relative h-[304px] cursor-pointer overflow-hidden border-[var(--primary)]" : "relative min-h-[506px] cursor-pointer overflow-hidden"}
+        className={compact ? "theme-transition relative h-[304px] cursor-pointer overflow-hidden border-[var(--primary)]" : "theme-transition relative min-h-[506px] cursor-pointer overflow-hidden"}
         role="link"
         tabIndex={0}
         aria-label={`View ${property.name}`}
@@ -66,7 +67,9 @@ export function PropertyCard({ property, compact = false, priority = false }: { 
             void toggleSaved(property.id);
           }}
         >
-          <Heart size={compact ? 18 : 22} fill={saved ? "currentColor" : "none"} />
+          <motion.span animate={{ scale: saved ? [1, 1.12, 1] : 1 }} transition={{ duration: 0.22, ease: motionEase }}>
+            <Heart size={compact ? 18 : 22} fill={saved ? "currentColor" : "none"} />
+          </motion.span>
         </button>
         <div className={compact ? "p-4 pt-3" : "p-5 pt-4 sm:p-6 sm:pt-5"}>
           <p className={compact ? "text-[15px] font-bold leading-[1.4] text-[var(--primary)]" : "text-[22px] font-bold leading-[1.35] text-[var(--primary)]"}>

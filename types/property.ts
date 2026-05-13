@@ -27,6 +27,7 @@ export type Property = {
   landlordPhone: string;
   description: string;
   status?: "active" | "draft" | "unavailable";
+  createdBy?: string | null;
 };
 
 export type PropertyFilters = {

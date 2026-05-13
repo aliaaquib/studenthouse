@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, CalendarCheck, FileText, Home, MessageCircle, Search, ShieldCheck } from "lucide-react";
 import { useRef } from "react";
 import { assets } from "@/lib/assets";
+import { Reveal } from "@/components/motion";
 
 const stats = [
   { icon: Search, value: "1", label: "Search apartments", image: assets.heroHome },
@@ -110,7 +111,7 @@ export function Benefit() {
         </div>
       </div>
 
-      <div className="section-frame hidden overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--surface)] md:block">
+      <Reveal className="section-frame hidden overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--surface)] md:block" amount={0.15}>
         <div className="grid gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[420px_1fr] lg:px-12 lg:py-12">
           <div>
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)] text-white">
@@ -135,7 +136,7 @@ export function Benefit() {
             })}
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }

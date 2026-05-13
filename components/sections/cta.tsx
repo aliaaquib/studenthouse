@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Reveal, motionEase } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toast } from "@/components/ui/toast";
@@ -21,7 +23,7 @@ export function CTA() {
 
   return (
     <section className="bg-[var(--primary)] py-16 text-center text-white">
-      <div className="section-frame">
+      <Reveal className="section-frame" amount={0.18}>
         <p className="text-[13px] font-semibold uppercase tracking-[0.12em] opacity-80">Weekly housing alerts</p>
         <h2 className="mx-auto mt-3 max-w-[620px] text-[26px] font-medium leading-[1.2] sm:text-[40px]">
           Get the Latest Student
@@ -29,7 +31,7 @@ export function CTA() {
           Housing Updates
         </h2>
         <form
-          className="mx-auto mt-8 flex max-w-[560px] flex-col gap-3 rounded-[18px] bg-white p-3 shadow-[0_20px_60px_rgba(0,0,0,0.15)] sm:flex-row"
+          className="theme-transition mx-auto mt-8 flex max-w-[560px] flex-col gap-3 rounded-[18px] bg-white p-3 shadow-[0_20px_60px_rgba(0,0,0,0.15)] sm:flex-row"
           onSubmit={form.handleSubmit(() => {
             setSubscribed(true);
             form.reset();
@@ -46,9 +48,17 @@ export function CTA() {
         {form.formState.errors.email ? (
           <p className="mt-2 text-[14px] font-medium text-white">{form.formState.errors.email.message}</p>
         ) : null}
-        {subscribed ? <Toast className="mt-4 bg-white text-[#10201c]">You are subscribed to housing alerts.</Toast> : null}
+        {subscribed ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: motionEase }}
+          >
+            <Toast className="mt-4 bg-white text-[#10201c]">You are subscribed to housing alerts.</Toast>
+          </motion.div>
+        ) : null}
         <p className="mt-6 text-[14px] font-normal text-white/80">Join 15,000+ students tracking verified housing near campus.</p>
-      </div>
+      </Reveal>
     </section>
   );
 }

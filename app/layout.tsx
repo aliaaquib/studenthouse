@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { AdminSettingsProvider } from "@/components/providers/admin-settings-provider";
+import { MotionProvider } from "@/components/providers/motion-provider";
 import { getPlatformSettings } from "@/lib/db/queries";
 import "./globals.css";
 
@@ -56,9 +57,11 @@ export default async function RootLayout({
         />
       </head>
       <body className={plusJakarta.variable}>
-        <AuthProvider>
-          <AdminSettingsProvider settings={settings}>{children}</AdminSettingsProvider>
-        </AuthProvider>
+        <MotionProvider>
+          <AuthProvider>
+            <AdminSettingsProvider settings={settings}>{children}</AdminSettingsProvider>
+          </AuthProvider>
+        </MotionProvider>
       </body>
     </html>
   );

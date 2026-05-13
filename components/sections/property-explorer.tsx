@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { MapPin, SearchX } from "lucide-react";
 import { motion } from "framer-motion";
+import { fadeUpVariants, staggerContainer } from "@/components/motion";
 import { PropertyCard } from "@/components/sections/property-card";
 import { PropertyFilters } from "@/components/sections/property-filters";
 import { Button } from "@/components/ui/button";
@@ -97,10 +98,10 @@ export function PropertyExplorer({
           className={variant === "map" ? "mt-8 grid gap-8 md:grid-cols-2" : "mt-10 grid gap-8 md:grid-cols-2 xl:grid-cols-3"}
           initial="hidden"
           animate="show"
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+          variants={staggerContainer}
         >
           {filteredProperties.map((property) => (
-            <motion.div key={property.id} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
+            <motion.div key={property.id} variants={fadeUpVariants}>
               <PropertyCard property={property} />
             </motion.div>
           ))}
@@ -131,7 +132,7 @@ export function PropertyExplorer({
             <a
               key={property.id}
               href={`/properties/${property.slug}`}
-              className={`focus-ring absolute flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.3)] ${pinClasses[index]}`}
+              className={`focus-ring motion-surface absolute flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.3)] transition duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-105 ${pinClasses[index]}`}
               aria-label={`View ${property.title} on map`}
             >
               <MapPin size={20} />

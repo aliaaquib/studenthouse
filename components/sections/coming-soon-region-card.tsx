@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toast } from "@/components/ui/toast";
+import { motionEase } from "@/components/motion";
 import type { City } from "@/types/property";
 
 const schema = z.object({
@@ -33,7 +34,7 @@ export function ComingSoonRegionCard({ city }: { city: City }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="focus-ring group relative min-h-[190px] overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 text-left shadow-[var(--shadow-card)] transition hover:-translate-y-1 hover:border-[var(--primary)]"
+        className="focus-ring motion-surface theme-transition group relative min-h-[190px] overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 text-left shadow-[var(--shadow-card)] transition duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-[var(--primary)]"
         aria-label={`${city.name} student housing is coming soon`}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(23,166,115,0.14),transparent_34%),linear-gradient(145deg,rgba(255,184,77,0.12),transparent)] transition duration-500 group-hover:scale-110" />
@@ -56,6 +57,7 @@ export function ComingSoonRegionCard({ city }: { city: City }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: motionEase }}
             role="dialog"
             aria-modal="true"
             aria-labelledby={`region-${city.slug}-title`}
@@ -65,6 +67,7 @@ export function ComingSoonRegionCard({ city }: { city: City }) {
               initial={{ opacity: 0, y: 22, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 22, scale: 0.96 }}
+              transition={{ duration: 0.24, ease: motionEase }}
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)]">
                 <Clock size={22} />

@@ -3,12 +3,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { AppRole } from "@/lib/rbac";
 
 type AuthProfile = {
   id: string;
   email: string;
   full_name: string | null;
-  role: "admin" | "student";
+  role: AppRole;
 };
 
 type AuthContextValue = {

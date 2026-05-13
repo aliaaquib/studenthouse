@@ -39,18 +39,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PropertyImage } from "@/components/ui/property-image";
 import { Toast } from "@/components/ui/toast";
-import { deletePropertyAction, deleteUniversityAction, reorderFeaturedPropertiesAction, updatePlatformSettingsAction, updatePropertyFlagsAction, updateRegionAction, upsertPropertyAction, upsertUniversityAction } from "@/lib/actions/admin-data";
+import { deletePropertyAction, deleteUniversityAction, reorderFeaturedPropertiesAction, updatePlatformSettingsAction, updatePropertyFlagsAction, updateRegionAction, updateUserRoleAction, upsertPropertyAction, upsertUniversityAction } from "@/lib/actions/admin-data";
 import { useTheme } from "@/hooks/use-theme";
 import { type AdminSettings } from "@/lib/admin-settings";
 import { assets } from "@/lib/assets";
 import { MAX_PROPERTY_IMAGE_SIZE, validateImageMimeType } from "@/lib/property-images";
 import { formatKgs, WHATSAPP_PHONE } from "@/lib/property-utils";
+import { motionEase } from "@/components/motion";
+import type { AppRole } from "@/lib/rbac";
 import type { Property, Region, University } from "@/types/property";
 
-type AdminSection = "overview" | "properties" | "add" | "edit" | "universities" | "inquiries" | "featured" | "users" | "settings";
+type AdminSection = "overview" | "properties" | "add" | "edit" | "universities" | "inquiries" | "featured" | "agents" | "users" | "settings";
 type AdminProperty = Property & { status: "active" | "draft" | "unavailable" };
 type AdminInquiry = { id: string; name: string; apartmentTitle: string; date: string; whatsappNumber: string };
-type AdminUser = { id: string; name: string; role: "admin" | "student"; status: string; activity: string };
+type AdminUser = { id: string; name: string; email?: string; role: AppRole; status: string; activity: string };
 type FormSubmissionResult = { ok: boolean; message: string; reset?: boolean };
 
 const EMPTY_PROPERTIES: AdminProperty[] = [];
@@ -65,6 +67,7 @@ const navItems = [
   { id: "universities", label: "Universities", icon: Building2 },
   { id: "inquiries", label: "Messages/Inquiries", icon: Inbox },
   { id: "featured", label: "Featured Listings", icon: Star },
+  { id: "agents", label: "Agents", icon: BadgeCheck },
   { id: "users", label: "Users", icon: Users },
   { id: "settings", label: "Settings", icon: Settings }
 ] as const satisfies { id: AdminSection; label: string; icon: typeof LayoutDashboard }[];
@@ -191,7 +194,8 @@ export function AdminDashboard({
   initialSettings,
   initialUsers,
   initialInquiries,
-  initialFavoritesCount
+  initialFavoritesCount,
+  initialSection = "overview"
 }: {
   adminEmail?: string | null;
   initialProperties: Property[];
@@ -202,10 +206,11 @@ export function AdminDashboard({
   initialUsers: AdminUser[];
   initialInquiries: AdminInquiry[];
   initialFavoritesCount: number;
+  initialSection?: AdminSection;
 }) {
   const router = useRouter();
   const [, startRefreshTransition] = useTransition();
-  const [section, setSection] = useState<AdminSection>("overview");
+  const [section, setSection] = useState<AdminSection>(initialSection);
   const [properties, setProperties] = useState<AdminProperty[]>(() => initialProperties.map(toAdminProperty));
   const [universities, setUniversities] = useState<University[]>(initialUniversities);
   const [activeRegions, setActiveRegions] = useState<Region[]>(initialActiveRegions);
@@ -448,7 +453,7 @@ export function AdminDashboard({
             </div>
           </div>
           <AnimatePresence mode="wait">
-            <motion.div key={section} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.22 }}>
+            <motion.div key={section} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.22, ease: motionEase }}>
               {section === "overview" ? <OverviewSection stats={stats} properties={safeProperties} /> : null}
               {section === "properties" || section === "edit" ? (
                 <PropertiesSection
@@ -465,6 +470,7 @@ export function AdminDashboard({
               {section === "universities" ? <UniversitiesSection universities={safeUniversities} onSave={saveUniversity} onRemove={removeUniversity} /> : null}
               {section === "inquiries" ? <InquiriesSection inquiries={initialInquiries} /> : null}
               {section === "featured" ? <FeaturedSection properties={featuredProperties} onToggleFeatured={toggleFeatured} onMove={moveFeatured} /> : null}
+              {section === "agents" ? <AgentsSection users={initialUsers} /> : null}
               {section === "users" ? <UsersSection users={initialUsers} /> : null}
               {section === "settings" ? (
                 <SettingsSection
@@ -579,7 +585,7 @@ function PropertiesSection({
             <span>Apartment</span><span>University</span><span>Rent</span><span>Status</span><span>Actions</span>
           </div>
           {properties.map((property) => (
-            <motion.div key={property.id} className="grid grid-cols-[1.3fr_1fr_120px_110px_170px] items-center border-b border-[var(--border)] p-4 text-[13px] font-semibold transition hover:bg-[rgba(23,166,115,0.04)]">
+            <motion.div key={property.id} whileHover={{ x: 2 }} transition={{ duration: 0.18, ease: motionEase }} className="grid grid-cols-[1.3fr_1fr_120px_110px_170px] items-center border-b border-[var(--border)] p-4 text-[13px] font-semibold transition hover:bg-[rgba(23,166,115,0.04)]">
               <div className="flex items-center gap-3">
                 <PropertyImage src={property.image} alt="" width={48} height={48} className="h-12 w-12 rounded-[12px] object-cover" />
                 <span><strong className="block text-[14px]">{property.title}</strong><small className="text-[var(--muted)]">{property.id}</small></span>
@@ -817,6 +823,75 @@ function FeaturedSection({ properties, onToggleFeatured, onMove }: { properties:
   );
 }
 
+function RoleManager({
+  user,
+  allowedRoles
+}: {
+  user: AdminUser;
+  allowedRoles: AppRole[];
+}) {
+  const [pendingRole, setPendingRole] = useState<AppRole | null>(null);
+
+  async function setRole(role: AppRole) {
+    setPendingRole(role);
+    await updateUserRoleAction(user.id, role);
+    setPendingRole(null);
+  }
+
+  return (
+    <div className="mt-4 flex flex-wrap gap-2">
+      {allowedRoles.map((role) => (
+        <Button
+          key={role}
+          size="sm"
+          variant={user.role === role ? "default" : "outline"}
+          disabled={pendingRole === role}
+          onClick={() => void setRole(role)}
+        >
+          {pendingRole === role ? <Loader2 size={14} className="animate-spin" /> : null}
+          {role === "agent" ? "Make agent" : role === "student" ? "Make student" : "Make admin"}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+function AgentsSection({ users }: { users: AdminUser[] }) {
+  const agents = users.filter((user) => user.role === "agent");
+  const students = users.filter((user) => user.role === "student");
+
+  return (
+    <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
+      <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
+        <h3 className="text-[22px] font-extrabold">Agent accounts</h3>
+        <div className="mt-5 grid gap-3">
+          {agents.length ? agents.map((user) => (
+            <div key={user.id} className="rounded-[18px] bg-[var(--surface)] p-4">
+              <strong className="block text-[15px] font-extrabold">{user.name}</strong>
+              <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{user.role}</p>
+              <p className="mt-1 text-[12px] font-medium text-[var(--muted)]">Active since {user.activity}</p>
+              <RoleManager user={user} allowedRoles={["student"]} />
+            </div>
+          )) : <div className="rounded-[18px] bg-[var(--surface)] p-4 text-[13px] font-semibold text-[var(--muted)]">No agent accounts yet.</div>}
+        </div>
+      </div>
+      <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]">
+        <h3 className="text-[22px] font-extrabold">Promote students</h3>
+        <div className="mt-5 grid gap-3">
+          {students.length ? students.map((user) => (
+            <div key={user.id} className="rounded-[18px] bg-[var(--surface)] p-4">
+              <strong className="block text-[15px] font-extrabold">{user.name}</strong>
+              <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--muted)]">{user.role}</p>
+              <p className="mt-1 text-[12px] font-medium text-[var(--muted)]">Joined {user.activity}</p>
+              <RoleManager user={user} allowedRoles={["agent"]} />
+            </div>
+          )) : <div className="rounded-[18px] bg-[var(--surface)] p-4 text-[13px] font-semibold text-[var(--muted)]">No student accounts available for promotion.</div>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function UsersSection({ users }: { users: AdminUser[] }) {
   return (
     <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -829,6 +904,7 @@ function UsersSection({ users }: { users: AdminUser[] }) {
             <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-extrabold">{user.status}</span>
             <span className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-extrabold">{user.activity}</span>
           </div>
+          <RoleManager user={user} allowedRoles={["student", "agent", "admin"]} />
         </div>
       )) : <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 text-[13px] font-semibold text-[var(--muted)] shadow-[var(--shadow-card)]">No users found yet.</div>}
     </section>
@@ -901,8 +977,8 @@ function ListingRow({ property }: { property: AdminProperty }) {
 
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
-    <motion.div className="fixed inset-0 z-[80] overflow-y-auto bg-black/40 px-4 py-8 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <motion.div className="mx-auto w-full max-w-[980px] rounded-[24px] border border-[var(--border)] bg-[var(--background)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)]" initial={{ opacity: 0, y: 22, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 22, scale: 0.97 }}>
+    <motion.div className="fixed inset-0 z-[80] overflow-y-auto bg-black/40 px-4 py-8 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18, ease: motionEase }}>
+      <motion.div className="mx-auto w-full max-w-[980px] rounded-[24px] border border-[var(--border)] bg-[var(--background)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)]" initial={{ opacity: 0, y: 22, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 22, scale: 0.97 }} transition={{ duration: 0.22, ease: motionEase }}>
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-[24px] font-extrabold">{title}</h2>
           <Button variant="outline" size="sm" onClick={onClose}><X size={15} /></Button>
@@ -915,8 +991,8 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
 
 function ConfirmDeleteModal({ property, onCancel, onConfirm }: { property: AdminProperty; onCancel: () => void; onConfirm: () => void }) {
   return (
-    <motion.div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 px-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <motion.div className="w-full max-w-[440px] rounded-[24px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)]" initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 22 }}>
+    <motion.div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 px-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18, ease: motionEase }}>
+      <motion.div className="w-full max-w-[440px] rounded-[24px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)]" initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 22 }} transition={{ duration: 0.22, ease: motionEase }}>
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--primary)]"><LockKeyhole size={22} /></div>
         <h2 className="mt-5 text-[24px] font-extrabold">Delete listing?</h2>
         <p className="mt-2 text-[14px] font-semibold leading-[1.7] text-[var(--muted)]">{property.title} will be removed from admin listings. You can undo immediately after deletion.</p>

@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import type { AdminSettings } from "@/lib/admin-settings";
+import { getCurrentSession } from "@/lib/auth/guards";
 import { extractSupabaseStoragePath, getImageUploadExtension, isAbsoluteImageUrl, isLocalAssetImage, isSupabaseStoragePath, normalizePropertyImageReference, parseDataImageUrl, PROPERTY_IMAGE_BUCKET, validateImageMimeType } from "@/lib/property-images";
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { canCreateProperty, canDeleteProperty, canEditProperty, isAdmin, type AppRole } from "@/lib/rbac";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PropertyPayload = {
   id?: string;
@@ -30,12 +32,10 @@ type PropertyPayload = {
 };
 
 function revalidatePropertyViews() {
-  ["/", "/properties", "/search", "/saved", "/favorites", "/dashboard", "/universities", "/admin/dashboard"].forEach((path) => revalidatePath(path));
+  ["/", "/properties", "/search", "/saved", "/favorites", "/dashboard", "/universities", "/admin/dashboard", "/agent"].forEach((path) => revalidatePath(path));
 }
 
-async function findUniversityId(universityName: string) {
-  const supabase = getSupabaseAdminClient();
-  if (!supabase) return null;
+async function findUniversityId(universityName: string, supabase: NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>) {
 
   const { data } = await supabase
     .from("universities")
@@ -47,7 +47,7 @@ async function findUniversityId(universityName: string) {
 }
 
 async function uploadPropertyImages(propertyId: string, slug: string, images: string[]) {
-  const supabase = getSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [] as string[];
 
   const uploaded: string[] = [];
@@ -81,7 +81,7 @@ async function uploadPropertyImages(propertyId: string, slug: string, images: st
 }
 
 async function listPropertyStoragePaths(propertyId: string) {
-  const supabase = getSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return [] as string[];
 
   const { data } = await supabase
@@ -95,17 +95,35 @@ async function listPropertyStoragePaths(propertyId: string) {
 }
 
 async function deletePropertyStorageObjects(paths: string[]) {
-  const supabase = getSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   if (!supabase || !paths.length) return;
 
   await supabase.storage.from(PROPERTY_IMAGE_BUCKET).remove(paths);
 }
 
 export async function upsertPropertyAction(payload: PropertyPayload) {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!session || !canCreateProperty(session.role)) return { ok: false, message: "You do not have permission to save properties." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
-  const universityId = await findUniversityId(payload.universityName);
+  const universityId = await findUniversityId(payload.universityName, supabase);
+  let existingPropertyOwnerId: string | null = null;
+
+  if (payload.id) {
+    const { data: existingProperty } = await supabase
+      .from("properties")
+      .select("id, created_by")
+      .eq("id", payload.id)
+      .maybeSingle();
+
+    existingPropertyOwnerId = existingProperty?.created_by ?? null;
+    if (!canEditProperty(session, existingPropertyOwnerId)) {
+      return { ok: false, message: "You do not have permission to edit this property." };
+    }
+  }
+
   const propertyRow = {
     title: payload.title,
     slug: payload.slug,
@@ -127,7 +145,8 @@ export async function upsertPropertyAction(payload: PropertyPayload) {
     featured: payload.featured,
     listing_status: payload.status ?? (payload.verified ? "active" : "unavailable"),
     available_from: payload.availableFrom,
-    whatsapp_number: payload.whatsappNumber
+    whatsapp_number: payload.whatsappNumber,
+    created_by: payload.id ? (existingPropertyOwnerId ?? session.id) : session.id
   };
 
   const query = payload.id
@@ -157,7 +176,10 @@ export async function upsertPropertyAction(payload: PropertyPayload) {
 }
 
 export async function deletePropertyAction(id: string) {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!canDeleteProperty(session)) return { ok: false, message: "Only admins can delete properties." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const existingStoragePaths = await listPropertyStoragePaths(id);
@@ -170,7 +192,10 @@ export async function deletePropertyAction(id: string) {
 }
 
 export async function updatePropertyFlagsAction(id: string, values: { featured?: boolean; verified?: boolean; status?: "active" | "draft" | "unavailable" }) {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!isAdmin(session?.role)) return { ok: false, message: "Only admins can update listing flags." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const updates: Record<string, boolean | string> = {};
@@ -186,7 +211,10 @@ export async function updatePropertyFlagsAction(id: string, values: { featured?:
 }
 
 export async function reorderFeaturedPropertiesAction(ids: string[]) {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!isAdmin(session?.role)) return { ok: false, message: "Only admins can reorder featured properties." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const updates = await Promise.all(
@@ -203,7 +231,10 @@ export async function reorderFeaturedPropertiesAction(ids: string[]) {
 }
 
 export async function upsertUniversityAction(payload: { id?: string; name: string; shortName?: string; city: string; region: string }) {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!isAdmin(session?.role)) return { ok: false, message: "Only admins can manage universities." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const row = {
@@ -224,7 +255,10 @@ export async function upsertUniversityAction(payload: { id?: string; name: strin
 }
 
 export async function deleteUniversityAction(identifier: string) {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!isAdmin(session?.role)) return { ok: false, message: "Only admins can manage universities." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const { error } = await supabase
@@ -239,7 +273,10 @@ export async function deleteUniversityAction(identifier: string) {
 }
 
 export async function updateRegionAction(name: string, status: "active" | "coming-soon") {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!isAdmin(session?.role)) return { ok: false, message: "Only admins can manage regions." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const { error } = await supabase
@@ -256,7 +293,10 @@ export async function updateRegionAction(name: string, status: "active" | "comin
 }
 
 export async function updatePlatformSettingsAction(settings: AdminSettings) {
-  const supabase = getSupabaseAdminClient();
+  const session = await getCurrentSession();
+  if (!isAdmin(session?.role)) return { ok: false, message: "Only admins can update platform settings." };
+
+  const supabase = await createSupabaseServerClient();
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const { error } = await supabase.from("platform_settings").upsert({
@@ -269,6 +309,22 @@ export async function updatePlatformSettingsAction(settings: AdminSettings) {
 
   if (error) return { ok: false, message: error.message };
 
-  ["/", "/properties", "/search", "/saved", "/favorites", "/dashboard", "/universities", "/admin/dashboard", "/about", "/add-property"].forEach((path) => revalidatePath(path));
+  ["/", "/properties", "/search", "/saved", "/favorites", "/dashboard", "/universities", "/admin/dashboard", "/agent", "/about", "/add-property"].forEach((path) => revalidatePath(path));
+  return { ok: true };
+}
+
+export async function updateUserRoleAction(userId: string, role: AppRole) {
+  const session = await getCurrentSession();
+  if (!isAdmin(session?.role)) return { ok: false, message: "Only admins can update user roles." };
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
+
+  const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/agents");
+  revalidatePath("/agent");
   return { ok: true };
 }

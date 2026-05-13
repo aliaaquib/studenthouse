@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Clock, GraduationCap, Map, MapPin, Search, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { MotionDiv } from "@/components/motion";
+import { MotionDiv, Reveal, motionEase, staggerContainer } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { assets } from "@/lib/assets";
 import { PropertyCard } from "@/components/sections/property-card";
@@ -77,7 +77,7 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
       </div>
       <div className="section-frame relative grid gap-12 pt-16 md:pt-16 lg:grid-cols-[560px_1fr] lg:pt-[76px]">
         <div>
-          <MotionDiv initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
+          <MotionDiv initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: motionEase }}>
             <div className="mb-5 hidden items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-[12px] font-semibold text-[var(--primary)] shadow-[var(--shadow-card)] sm:inline-flex">
               <GraduationCap size={16} /> Verified student housing
             </div>
@@ -94,7 +94,7 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -30, opacity: 0 }}
-                    transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 0.32, ease: motionEase }}
                   >
                     {heroWord}
                   </motion.span>
@@ -122,7 +122,7 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
                         initial={{ opacity: 0, y: -8, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                        transition={{ duration: 0.16 }}
+                        transition={{ duration: 0.18, ease: motionEase }}
                       >
                         {cityOptions.map((city) => (
                           <button
@@ -157,7 +157,7 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
                   <button
                     type="submit"
                     aria-label="Search properties"
-                    className="focus-ring flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_12px_32px_rgba(0,168,132,0.18)] transition hover:scale-105 hover:bg-[var(--primary-light)] md:h-[52px] md:w-[52px]"
+                  className="focus-ring motion-surface flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_12px_32px_rgba(0,168,132,0.18)] transition duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-105 hover:bg-[var(--primary-light)] md:h-[52px] md:w-[52px]"
                   >
                     <Search size={18} strokeWidth={1.5} className="text-white md:size-6" />
                   </button>
@@ -170,6 +170,7 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18, ease: motionEase }}
                     role="status"
                   >
                     <button type="button" className="focus-ring absolute right-3 top-3 rounded-full p-1 text-[var(--muted)] hover:bg-[var(--surface)]" onClick={() => setComingSoonCity(null)} aria-label="Close city availability message">
@@ -184,7 +185,7 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="!text-white">
-              <Link href="/properties" className="!text-white">Browse Apartments</Link>
+              <Link href="/properties" className="!text-white">View Apartments</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/universities">Explore Universities</Link>
@@ -195,14 +196,16 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
           className="relative hidden min-h-[640px] lg:block"
           initial={{ opacity: 0, x: 32 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.65, delay: 0.1 }}
+          transition={{ duration: 0.48, delay: 0.06, ease: motionEase }}
         >
-          <div className="absolute left-[42px] top-0 w-[340px]">
-            <PropertyCard property={properties[0]} priority />
-          </div>
-          <div className="absolute bottom-5 right-0 w-[218px]">
+          <motion.div className="absolute left-[42px] top-0 w-[340px]" initial="hidden" animate="show" variants={staggerContainer}>
+            <Reveal amount={0.35}>
+              <PropertyCard property={properties[0]} priority />
+            </Reveal>
+          </motion.div>
+          <motion.div className="absolute bottom-5 right-0 w-[218px]" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.34, delay: 0.14, ease: motionEase }}>
             <PropertyCard property={properties[1] ?? properties[0]} compact />
-          </div>
+          </motion.div>
           <div className="absolute right-[138px] top-[270px] flex h-16 w-14 items-center justify-center">
             <div className="absolute bottom-0 h-4 w-4 rounded-full bg-[var(--primary)]" />
             <div className="absolute top-0 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.32)]">

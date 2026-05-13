@@ -31,7 +31,7 @@ export function Testimonials() {
   return (
     <section className="overflow-hidden bg-[var(--background)] py-16 sm:py-20">
       <div className="section-frame">
-        <div className="text-left sm:text-center">
+        <Reveal className="text-left sm:text-center" amount={0.2}>
           <h2 className="text-[34px] font-medium leading-[1.22] tracking-[-0.01em] sm:mx-auto sm:max-w-[620px] sm:text-[44px] sm:leading-[1.12]">
             What{" "}
             <span className="relative inline-block font-light text-[var(--primary)]">
@@ -43,7 +43,7 @@ export function Testimonials() {
             Say
             <br className="sm:hidden" /> About Us
           </h2>
-        </div>
+        </Reveal>
         <div className="mt-12 space-y-10">
           <ReviewRow items={firstRow} direction="left" />
           <ReviewRow items={secondRow} direction="right" />
@@ -52,3 +52,4 @@ export function Testimonials() {
     </section>
   );
 }
+import { Reveal } from "@/components/motion";

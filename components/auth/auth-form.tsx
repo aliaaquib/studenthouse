@@ -6,9 +6,20 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { canAccessAdmin, canAccessAgentDashboard, type AppRole } from "@/lib/rbac";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Mode = "login" | "signup";
+
+async function getUserRole(supabase: NonNullable<ReturnType<typeof createSupabaseBrowserClient>>, userId: string) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return (profile?.role as AppRole | undefined) ?? "student";
+}
 
 export function AuthForm({
   mode,
@@ -66,18 +77,18 @@ export function AuthForm({
         return;
       }
 
-      if (nextPath.startsWith("/admin")) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .maybeSingle();
+      const role = await getUserRole(supabase, data.user.id);
 
-        if (profile?.role !== "admin") {
-          setError("This account does not have admin access.");
-          await supabase.auth.signOut();
-          return;
-        }
+      if (nextPath.startsWith("/admin") && !canAccessAdmin(role)) {
+        setError("This account does not have admin access.");
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (nextPath.startsWith("/agent") && !canAccessAgentDashboard(role)) {
+        setError("This account does not have agent access.");
+        await supabase.auth.signOut();
+        return;
       }
 
       router.push(nextPath);

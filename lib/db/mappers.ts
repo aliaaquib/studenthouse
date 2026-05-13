@@ -42,6 +42,7 @@ export type DbProperty = {
   listing_status: "active" | "draft" | "unavailable";
   available_from: string | null;
   whatsapp_number: string | null;
+  created_by: string | null;
   universities?: DbUniversity | null;
   property_images?: DbPropertyImage[] | null;
 };
@@ -118,6 +119,7 @@ export function mapDbProperty(row: DbProperty): Property {
     agent: "Verified landlord",
     landlordPhone: row.whatsapp_number ?? `+${WHATSAPP_PHONE}`,
     description: row.description,
-    status: row.listing_status
+    status: row.listing_status,
+    createdBy: row.created_by
   };
 }

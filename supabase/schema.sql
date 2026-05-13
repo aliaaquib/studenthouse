@@ -4,8 +4,23 @@
 create extension if not exists "pgcrypto";
 
 do $$ begin
-  create type public.user_role as enum ('admin', 'student');
+  create type public.user_role as enum ('admin', 'agent', 'student');
 exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_type t
+    join pg_namespace n on n.oid = t.typnamespace
+    where t.typname = 'user_role' and n.nspname = 'public'
+  ) then
+    begin
+      alter type public.user_role add value if not exists 'agent';
+    exception when duplicate_object then null;
+    end;
+  end if;
 end $$;
 
 create table if not exists public.profiles (
@@ -150,6 +165,25 @@ as $$
   );
 $$;
 
+create or replace function public.is_agent()
+returns boolean
+language sql
+stable
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'agent'
+  );
+$$;
+
+create or replace function public.is_admin_or_agent()
+returns boolean
+language sql
+stable
+as $$
+  select public.is_admin() or public.is_agent();
+$$;
+
 create or replace function public.handle_new_user_profile()
 returns trigger
 language plpgsql
@@ -214,14 +248,59 @@ create policy "Admins manage platform settings" on public.platform_settings for 
 
 drop policy if exists "Public can read verified properties" on public.properties;
 create policy "Public can read verified properties" on public.properties
-for select using (verified = true or public.is_admin());
+for select using (
+  verified = true
+  or public.is_admin()
+  or (public.is_agent() and created_by = auth.uid())
+);
 drop policy if exists "Admins manage properties" on public.properties;
-create policy "Admins manage properties" on public.properties for all using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "Admins insert properties" on public.properties;
+drop policy if exists "Admins update properties" on public.properties;
+drop policy if exists "Admins delete properties" on public.properties;
+drop policy if exists "Agents insert own properties" on public.properties;
+drop policy if exists "Agents update own properties" on public.properties;
+create policy "Admins insert properties" on public.properties
+for insert with check (public.is_admin());
+create policy "Admins update properties" on public.properties
+for update using (public.is_admin()) with check (public.is_admin());
+create policy "Admins delete properties" on public.properties
+for delete using (public.is_admin());
+create policy "Agents insert own properties" on public.properties
+for insert with check (public.is_agent() and created_by = auth.uid());
+create policy "Agents update own properties" on public.properties
+for update using (public.is_agent() and created_by = auth.uid())
+with check (public.is_agent() and created_by = auth.uid());
 
 drop policy if exists "Public can read property images" on public.property_images;
 create policy "Public can read property images" on public.property_images for select using (true);
 drop policy if exists "Admins manage property images" on public.property_images;
-create policy "Admins manage property images" on public.property_images for all using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "Admins insert property images" on public.property_images;
+drop policy if exists "Admins update property images" on public.property_images;
+drop policy if exists "Admins delete property images" on public.property_images;
+drop policy if exists "Agents manage own property images" on public.property_images;
+create policy "Admins insert property images" on public.property_images
+for insert with check (public.is_admin());
+create policy "Admins update property images" on public.property_images
+for update using (public.is_admin()) with check (public.is_admin());
+create policy "Admins delete property images" on public.property_images
+for delete using (public.is_admin());
+create policy "Agents manage own property images" on public.property_images
+for all using (
+  public.is_agent()
+  and exists (
+    select 1 from public.properties
+    where properties.id = property_images.property_id
+      and properties.created_by = auth.uid()
+  )
+)
+with check (
+  public.is_agent()
+  and exists (
+    select 1 from public.properties
+    where properties.id = property_images.property_id
+      and properties.created_by = auth.uid()
+  )
+);
 
 drop policy if exists "Users manage own favorites" on public.favorites;
 create policy "Users manage own favorites" on public.favorites for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -231,7 +310,16 @@ create policy "Admins read favorites" on public.favorites for select using (publ
 drop policy if exists "Users create inquiries" on public.inquiries;
 create policy "Users create inquiries" on public.inquiries for insert with check (auth.uid() = user_id or user_id is null);
 drop policy if exists "Users read own inquiries" on public.inquiries;
+drop policy if exists "Agents read own listing inquiries" on public.inquiries;
 create policy "Users read own inquiries" on public.inquiries for select using (auth.uid() = user_id or public.is_admin());
+create policy "Agents read own listing inquiries" on public.inquiries for select using (
+  public.is_agent()
+  and exists (
+    select 1 from public.properties
+    where properties.id = inquiries.property_id
+      and properties.created_by = auth.uid()
+  )
+);
 
 drop policy if exists "Users manage own recent views" on public.recent_views;
 create policy "Users manage own recent views" on public.recent_views for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -280,9 +368,10 @@ create policy "Public can read property storage" on storage.objects
 for select using (bucket_id = 'properties');
 
 drop policy if exists "Admins manage property storage" on storage.objects;
-create policy "Admins manage property storage" on storage.objects
-for all using (bucket_id = 'properties' and public.is_admin())
-with check (bucket_id = 'properties' and public.is_admin());
+drop policy if exists "Admins and agents manage property storage" on storage.objects;
+create policy "Admins and agents manage property storage" on storage.objects
+for all using (bucket_id = 'properties' and public.is_admin_or_agent())
+with check (bucket_id = 'properties' and public.is_admin_or_agent());
 
 drop policy if exists "Public can read university storage" on storage.objects;
 create policy "Public can read university storage" on storage.objects

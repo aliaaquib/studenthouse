@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
+import { fadeUpVariants, staggerContainer } from "@/components/motion";
 import { PropertyCard } from "@/components/sections/property-card";
 import { Button } from "@/components/ui/button";
 import type { Property } from "@/types/property";
@@ -18,7 +19,7 @@ export function SavedApartments({ properties }: { properties: Property[] }) {
             Tap the heart on any apartment to build your shortlist and compare rooms later.
           </p>
           <Button asChild className="mt-6">
-            <Link href="/properties">Browse apartments</Link>
+            <Link href="/properties">View apartments</Link>
           </Button>
         </div>
       </section>
@@ -26,12 +27,17 @@ export function SavedApartments({ properties }: { properties: Property[] }) {
   }
 
   return (
-    <section className="section-frame grid gap-8 py-12 md:grid-cols-2 xl:grid-cols-3">
+    <motion.section
+      className="section-frame grid gap-8 py-12 md:grid-cols-2 xl:grid-cols-3"
+      initial="hidden"
+      animate="show"
+      variants={staggerContainer}
+    >
       {properties.map((property) => (
-        <motion.div key={property.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div key={property.id} variants={fadeUpVariants}>
           <PropertyCard property={property} />
         </motion.div>
       ))}
-    </section>
+    </motion.section>
   );
 }

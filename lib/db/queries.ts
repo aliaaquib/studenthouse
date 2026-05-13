@@ -1,4 +1,5 @@
 import { defaultAdminSettings, mapPlatformSettingsRow } from "@/lib/admin-settings";
+import { getCurrentSession, type AppUserSession } from "@/lib/auth/guards";
 import { mapDbProperty, mapDbRegion, mapDbUniversity, regionToCity, type DbProperty } from "@/lib/db/mappers";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -30,6 +31,7 @@ type PlatformSettingsRow = {
 
 type InquiryRow = {
   id: string;
+  property_id: string | null;
   message: string;
   whatsapp_number: string;
   created_at: string;
@@ -41,7 +43,7 @@ type ProfileRow = {
   id: string;
   full_name: string | null;
   email: string;
-  role: "admin" | "student";
+  role: "admin" | "agent" | "student";
   created_at: string;
 };
 
@@ -171,6 +173,26 @@ export async function getAdminProperties(): Promise<Property[]> {
     .order("featured_rank", { ascending: true })
     .order("created_at", { ascending: false });
 
+  if (error || !data) return [];
+  return (data as DbProperty[]).map(mapDbProperty);
+}
+
+export async function getManagedProperties(session: Pick<AppUserSession, "id" | "role">): Promise<Property[]> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from("properties")
+    .select(propertySelect)
+    .order("featured", { ascending: false })
+    .order("featured_rank", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (session.role === "agent") {
+    query = query.eq("created_by", session.id);
+  }
+
+  const { data, error } = await query;
   if (error || !data) return [];
   return (data as DbProperty[]).map(mapDbProperty);
 }
@@ -410,6 +432,7 @@ export async function getAdminDashboardData() {
     users: users.map((user) => ({
       id: user.id,
       name: user.full_name || user.email,
+      email: user.email,
       role: user.role,
       status: "active",
       activity: new Date(user.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })
@@ -422,5 +445,61 @@ export async function getAdminDashboardData() {
       whatsappNumber: inquiry.whatsapp_number
     })),
     favoritesCount
+  };
+}
+
+export async function getAgentDashboardData() {
+  const session = await getCurrentSession();
+  if (!session) {
+    return {
+      session: null,
+      properties: [] as Property[],
+      inquiries: [] as {
+        id: string;
+        name: string;
+        apartmentTitle: string;
+        date: string;
+        whatsappNumber: string;
+      }[]
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) {
+    return { session, properties: [] as Property[], inquiries: [] as { id: string; name: string; apartmentTitle: string; date: string; whatsappNumber: string }[] };
+  }
+
+  const [properties, inquiriesResult] = await Promise.all([
+    getManagedProperties(session),
+    supabase
+      .from("inquiries")
+      .select(`
+        id,
+        property_id,
+        message,
+        whatsapp_number,
+        created_at,
+        properties:property_id ( title, created_by ),
+        profiles:user_id ( full_name, email )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(20)
+  ]);
+
+  const managedPropertyIds = new Set(properties.map((property) => property.id));
+  const rawInquiries = (inquiriesResult.data as unknown as InquiryRow[] | null) ?? [];
+
+  return {
+    session,
+    properties,
+    inquiries: rawInquiries
+      .filter((inquiry) => Boolean(inquiry.property_id) && managedPropertyIds.has(inquiry.property_id as string))
+      .map((inquiry) => ({
+        id: inquiry.id,
+        name: inquiry.profiles?.full_name || inquiry.profiles?.email || "Student inquiry",
+        apartmentTitle: inquiry.properties?.title || "Unknown apartment",
+        date: inquiry.created_at.slice(0, 10),
+        whatsappNumber: inquiry.whatsapp_number
+      }))
   };
 }
