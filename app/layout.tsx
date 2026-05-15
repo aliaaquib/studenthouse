@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { Viewport } from "next";
 import type { ReactNode } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { AdminSettingsProvider } from "@/components/providers/admin-settings-provider";
 import { MotionProvider } from "@/components/providers/motion-provider";
@@ -65,6 +66,7 @@ export default async function RootLayout({
             </SavedPropertiesProvider>
           </AuthProvider>
         </MotionProvider>
+        <Analytics />
       </body>
     </html>
   );
