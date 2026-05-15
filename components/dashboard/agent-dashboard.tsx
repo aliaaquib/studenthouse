@@ -286,14 +286,28 @@ function AgentOverview({ properties, inquiries }: { properties: AgentProperty[];
           );
         })}
       </div>
-      <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
-        <h3 className="text-[20px] font-extrabold">Recent listings</h3>
-        <div className="mt-5 grid gap-3">
-          {properties.slice(0, 4).map((property) => (
-            <div key={property.id} className="rounded-[14px] bg-[var(--surface)] p-4 text-[13px] font-semibold">
-              {property.title} · {property.price}
-            </div>
-          ))}
+      <div className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
+        <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
+          <h3 className="text-[20px] font-extrabold">Recent listings</h3>
+          <div className="mt-5 grid gap-3">
+            {properties.length ? properties.slice(0, 4).map((property) => (
+              <div key={property.id} className="rounded-[14px] bg-[var(--surface)] p-4 text-[13px] font-semibold">
+                {property.title} · {property.price}
+              </div>
+            )) : <div className="rounded-[14px] bg-[var(--surface)] p-4 text-[13px] font-medium text-[var(--muted)]">No listings yet.</div>}
+          </div>
+        </div>
+        <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
+          <h3 className="text-[20px] font-extrabold">Recent inquiries</h3>
+          <div className="mt-5 grid gap-3">
+            {inquiries.length ? inquiries.slice(0, 4).map((inquiry) => (
+              <div key={inquiry.id} className="rounded-[14px] bg-[var(--surface)] p-4">
+                <p className="text-[13px] font-bold text-[var(--muted-strong)]">{inquiry.name}</p>
+                <p className="mt-1 text-[12px] font-normal text-[var(--muted)]">{inquiry.apartmentTitle}</p>
+                <p className="mt-1 text-[11px] font-medium text-[var(--primary)]">{inquiry.date}</p>
+              </div>
+            )) : <div className="rounded-[14px] bg-[var(--surface)] p-4 text-[13px] font-medium text-[var(--muted)]">No inquiries yet.</div>}
+          </div>
         </div>
       </div>
     </section>

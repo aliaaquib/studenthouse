@@ -454,7 +454,7 @@ export function AdminDashboard({
           </div>
           <AnimatePresence mode="wait">
             <motion.div key={section} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.22, ease: motionEase }}>
-              {section === "overview" ? <OverviewSection stats={stats} properties={safeProperties} /> : null}
+              {section === "overview" ? <OverviewSection stats={stats} properties={safeProperties} inquiries={initialInquiries} /> : null}
               {section === "properties" || section === "edit" ? (
                 <PropertiesSection
                   properties={filteredProperties}
@@ -505,9 +505,34 @@ export function AdminDashboard({
   );
 }
 
-function OverviewSection({ stats, properties }: { stats: { label: string; value: string; icon: typeof Home }[]; properties: AdminProperty[] }) {
-  const activity = ["JAIU Riverside Studio marked featured", "New CAIMU inquiry received", "Jalal-Abad availability updated", "JASU rent changed to KGS"];
-  const chart = ["h-20", "h-28", "h-16", "h-32", "h-24", "h-36"];
+function OverviewSection({
+  stats,
+  properties,
+  inquiries
+}: {
+  stats: { label: string; value: string; icon: typeof Home }[];
+  properties: AdminProperty[];
+  inquiries: AdminInquiry[];
+}) {
+  const weeklySeries = (() => {
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const counts = labels.map(() => 0);
+
+    inquiries.forEach((inquiry) => {
+      const parsed = new Date(inquiry.date);
+      if (Number.isNaN(parsed.getTime())) return;
+      const jsDay = parsed.getDay();
+      const index = jsDay === 0 ? 6 : jsDay - 1;
+      counts[index] += 1;
+    });
+
+    const max = Math.max(...counts, 1);
+    return labels.map((label, index) => ({
+      label,
+      count: counts[index],
+      height: `${Math.max(18, (counts[index] / max) * 144)}px`
+    }));
+  })();
 
   return (
     <section className="mt-6 grid gap-6">
@@ -527,16 +552,30 @@ function OverviewSection({ stats, properties }: { stats: { label: string; value:
         <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
           <h3 className="flex items-center gap-2 text-[20px] font-extrabold"><BarChart3 size={20} color="var(--primary)" /> Weekly inquiries</h3>
           <div className="mt-8 flex h-44 items-end gap-4">
-            {chart.map((height, index) => {
-              const opacity = index === 5 ? "opacity-100" : "opacity-70";
-              return <span key={index} className={`flex-1 rounded-t-[12px] bg-[var(--primary)] ${opacity} ${height}`} />;
-            })}
+            {weeklySeries.map((item) => (
+              <div key={item.label} className="flex flex-1 flex-col items-center gap-3">
+                <span
+                  className={`w-full rounded-t-[12px] bg-[var(--primary)] ${item.count ? "opacity-100" : "opacity-30"}`}
+                  style={{ height: item.height }}
+                />
+                <div className="text-center">
+                  <span className="block text-[12px] font-semibold text-[var(--muted-strong)]">{item.label}</span>
+                  <span className="block text-[11px] font-normal text-[var(--muted)]">{item.count}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         <div className="rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-6 shadow-[var(--shadow-card)]">
-          <h3 className="text-[20px] font-extrabold">Recent activity</h3>
+          <h3 className="text-[20px] font-extrabold">Recent inquiries</h3>
           <div className="mt-5 grid gap-3">
-            {activity.map((item) => <div key={item} className="rounded-[14px] bg-[var(--surface)] p-3 text-[13px] font-bold text-[var(--muted-strong)]">{item}</div>)}
+            {inquiries.length ? inquiries.slice(0, 4).map((inquiry) => (
+              <div key={inquiry.id} className="rounded-[14px] bg-[var(--surface)] p-3">
+                <p className="text-[13px] font-bold text-[var(--muted-strong)]">{inquiry.name}</p>
+                <p className="mt-1 text-[12px] font-normal text-[var(--muted)]">{inquiry.apartmentTitle}</p>
+                <p className="mt-1 text-[11px] font-medium text-[var(--primary)]">{inquiry.date}</p>
+              </div>
+            )) : <div className="rounded-[14px] bg-[var(--surface)] p-3 text-[13px] font-medium text-[var(--muted)]">No inquiries yet.</div>}
           </div>
         </div>
       </div>
