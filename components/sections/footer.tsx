@@ -4,11 +4,38 @@ import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { assets } from "@/lib/assets";
 
 const columns = [
-  ["STUDENTS", "Find Apartments", "Shared Rooms", "Roommates"],
-  ["UNIVERSITIES", "Browse Universities", "Popular Locations"],
-  ["SUPPORT", "Help Center", "Safety Tips", "Contact"],
-  ["COMPANY", "About", "Careers", "Blog"]
-];
+  {
+    title: "STUDENTS",
+    links: [
+      { label: "Find Apartments", href: "/properties" },
+      { label: "Shared Rooms", href: "/shared-rooms" },
+      { label: "Roommates", href: "/roommates" }
+    ]
+  },
+  {
+    title: "UNIVERSITIES",
+    links: [
+      { label: "Browse Universities", href: "/universities" },
+      { label: "Popular Locations", href: "/popular-locations" }
+    ]
+  },
+  {
+    title: "SUPPORT",
+    links: [
+      { label: "Help Center", href: "/help-center" },
+      { label: "Safety Tips", href: "/safety-tips" },
+      { label: "Contact", href: "/contact" }
+    ]
+  },
+  {
+    title: "COMPANY",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Careers", href: "/careers" },
+      { label: "Blog", href: "/blog" }
+    ]
+  }
+] as const;
 
 export function Footer() {
   return (
@@ -21,13 +48,13 @@ export function Footer() {
           </Link>
           <nav className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4" aria-label="Footer navigation">
             {columns.map((column) => (
-              <div key={column[0]}>
-                <h3 className="text-[13px] font-semibold leading-[1.5] tracking-[0.08em]">{column[0]}</h3>
+              <div key={column.title}>
+                <h3 className="text-[13px] font-semibold leading-[1.5] tracking-[0.08em]">{column.title}</h3>
                 <ul className="mt-4 space-y-3 text-[14px] font-normal leading-[1.5] text-[var(--muted)]">
-                  {column.slice(1).map((item) => (
-                    <li key={item}>
-                      <Link href="/search" className="hover:text-[var(--primary)]">
-                        {item}
+                  {column.links.map((item) => (
+                    <li key={item.href}>
+                      <Link href={item.href} className="hover:text-[var(--primary)]">
+                        {item.label}
                       </Link>
                     </li>
                   ))}
