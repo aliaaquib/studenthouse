@@ -255,7 +255,9 @@ export async function getRegions(): Promise<{ activeRegions: Region[]; comingSoo
     return { activeRegions: [], comingSoonRegions: [], cities: [] };
   }
 
-  const regions = data.map(mapDbRegion);
+  const regions = data
+    .map(mapDbRegion)
+    .filter((region) => region.name !== "Manas");
   const activeRegions = regions.filter((region) => region.status === "active");
   const comingSoonRegions = regions.filter((region) => region.status === "coming-soon");
   const properties = await getPublicProperties();

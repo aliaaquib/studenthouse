@@ -330,7 +330,6 @@ create policy "Users manage own search history" on public.search_history for all
 insert into public.regions (name, is_active, coming_soon)
 values
   ('Jalal-Abad', true, false),
-  ('Manas', true, false),
   ('Bishkek', false, true),
   ('Osh', false, true),
   ('Kant', false, true),
@@ -339,6 +338,8 @@ values
   ('Talas', false, true),
   ('Batken', false, true)
 on conflict (name) do update set is_active = excluded.is_active, coming_soon = excluded.coming_soon;
+
+delete from public.regions where name = 'Manas';
 
 insert into public.universities (name, short_name, city, region, description)
 values

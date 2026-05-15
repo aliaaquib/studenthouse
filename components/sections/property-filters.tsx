@@ -66,24 +66,23 @@ export function PropertyFilters({
     >
       <div className="overflow-hidden rounded-[28px] bg-white p-2 shadow-[0_14px_36px_rgba(15,39,35,0.10)] dark:bg-[var(--card)]">
         <div className="flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-center">
-          <label className="focus-ring flex h-16 items-center rounded-[22px] border border-[var(--border)] bg-[var(--card)] px-4 lg:w-[190px] lg:flex-none">
+          <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--card)]">
+            <label className="focus-ring flex h-16 items-center border-r border-[var(--border)] px-4 lg:w-[190px] lg:flex-none">
             <MapPinned size={22} className="shrink-0 text-[var(--muted-strong)]" />
             <select
               aria-label="Launch region"
               className="ml-3 h-full min-w-0 flex-1 bg-transparent pr-6 text-[16px] font-semibold text-[var(--muted-strong)] outline-none"
               {...form.register("region")}
             >
-              <option>Any</option>
+              <option value="Any">City</option>
               {activeRegions.map((region) => <option key={region.slug}>{region.name}</option>)}
               {comingSoonRegions.map((region) => <option key={region.slug} disabled>{region.name} · Coming Soon</option>)}
             </select>
-          </label>
-
-          <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--card)]">
+            </label>
             <label className="relative flex h-16 min-w-0 flex-1 items-center px-5">
               {!watchedValues.query ? (
                 <span className="pointer-events-none absolute flex items-center gap-1 text-[15px] font-light text-[var(--muted)]">
-                  <span>Search by</span>
+                  <span>Search</span>
                   <span className="search-typing-word">{typedWord}</span>
                 </span>
               ) : null}
@@ -109,7 +108,7 @@ export function PropertyFilters({
               className="ml-3 h-full min-w-0 flex-1 bg-transparent pr-6 text-[16px] font-semibold text-[var(--muted-strong)] outline-none"
               {...form.register("roomType")}
             >
-              <option>Any</option>
+              <option value="Any">Room Type</option>
               <option>Studio</option>
               <option>Private room</option>
               <option>Shared room</option>
@@ -136,27 +135,27 @@ export function PropertyFilters({
           className="grid gap-4 rounded-[20px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-card)] md:grid-cols-2 xl:grid-cols-5"
         >
           <select aria-label="Budget" className={selectClassName} {...form.register("budget")}>
-            <option>Any</option>
+            <option value="Any">Budget</option>
             <option>Under 15,000 KGS</option>
             <option>15,000 - 22,000 KGS</option>
             <option>22,000+ KGS</option>
           </select>
           <select aria-label="University nearby" className={selectClassName} {...form.register("university")}>
-            <option>Any</option>
+            <option value="Any">University</option>
             {universities.map((university) => <option key={university}>{university}</option>)}
           </select>
           <select aria-label="Furnished status" className={selectClassName} {...form.register("furnished")}>
-            <option>Any</option>
+            <option value="Any">Furnished</option>
             <option>Furnished</option>
             <option>Unfurnished</option>
           </select>
           <select aria-label="Utilities included" className={selectClassName} {...form.register("utilities")}>
-            <option>Any</option>
+            <option value="Any">Utilities</option>
             <option>Included</option>
             <option>Separate</option>
           </select>
           <select aria-label="Gender preference" className={selectClassName} {...form.register("genderPreference")}>
-            <option>Any</option>
+            <option value="Any">Gender</option>
             <option>Female only</option>
             <option>Male only</option>
             <option>Mixed</option>

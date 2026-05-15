@@ -56,7 +56,6 @@ const NEARBY_LOCATION_MAP: Record<string, string[]> = {
   sputnik: ["Jalal-Abad", "JAIU", "JASU", "CAIMU"],
   "jalal abad": ["Jalal-Abad", "JAIU", "JASU", "CAIMU"],
   jalalabad: ["Jalal-Abad", "JAIU", "JASU", "CAIMU"],
-  manas: ["Jalal-Abad", "JAIU", "JASU"],
   caimu: ["CAIMU", "Jalal-Abad"],
   jaiu: ["JAIU", "Jalal-Abad"],
   jasu: ["JASU", "Jalal-Abad"]
