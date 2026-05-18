@@ -2,16 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppRole } from "@/lib/rbac";
 import type { CommentSort, PropertyComment } from "@/types/comment";
 
-type RawCommentProfile = {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  avatar_url: string | null;
-  role: AppRole | null;
-  created_at: string | null;
-};
-
-type RawCommentRow = {
+type BaseCommentRow = {
   id: string;
   property_id: string;
   user_id: string;
@@ -25,7 +16,13 @@ type RawCommentRow = {
   updated_at: string;
 };
 
-export const commentSelect = `
+type RawCommentRow = BaseCommentRow & {
+  author_name: string | null;
+  author_role: AppRole | null;
+  author_avatar_url: string | null;
+};
+
+const baseCommentSelect = `
   id,
   property_id,
   user_id,
@@ -39,9 +36,24 @@ export const commentSelect = `
   updated_at
 `;
 
-function mapComment(row: RawCommentRow, profile: RawCommentProfile | null, likedIds: Set<string>): PropertyComment {
-  const fallbackEmail = profile?.email ?? null;
-  const fallbackName = fallbackEmail?.split("@")[0] || "Student";
+export const commentSelect = `
+  ${baseCommentSelect},
+  author_name,
+  author_role,
+  author_avatar_url
+`;
+
+function hasAuthorSnapshotColumns(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+  return !(
+    message.includes("author_name") ||
+    message.includes("author_role") ||
+    message.includes("author_avatar_url")
+  );
+}
+
+function mapComment(row: RawCommentRow, likedIds: Set<string>): PropertyComment {
+  const fallbackName = row.author_name?.trim() || "Student";
 
   return {
     id: row.id,
@@ -57,12 +69,12 @@ function mapComment(row: RawCommentRow, profile: RawCommentProfile | null, liked
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     author: {
-      id: profile?.id ?? row.user_id,
-      name: profile?.full_name?.trim() || fallbackName,
-      email: fallbackEmail,
-      avatarUrl: profile?.avatar_url ?? null,
-      role: profile?.role ?? "student",
-      createdAt: profile?.created_at ?? null
+      id: row.user_id,
+      name: fallbackName,
+      email: null,
+      avatarUrl: row.author_avatar_url ?? null,
+      role: row.author_role ?? "student",
+      createdAt: null
     },
     replies: []
   };
@@ -95,16 +107,8 @@ export function sortCommentTree(comments: PropertyComment[], sort: CommentSort) 
     .map((comment) => ({ ...comment, replies: sortReplies(comment.replies) }));
 }
 
-export function buildCommentTree(rows: RawCommentRow[], likedIds: Set<string>) {
-  return buildCommentTreeWithProfiles(rows, new Map(), likedIds);
-}
-
-export function buildCommentTreeWithProfiles(
-  rows: RawCommentRow[],
-  profiles: Map<string, RawCommentProfile>,
-  likedIds: Set<string>
-) {
-  const mapped = rows.map((row) => mapComment(row, profiles.get(row.user_id) ?? null, likedIds));
+function buildCommentTree(rows: RawCommentRow[], likedIds: Set<string>) {
+  const mapped = rows.map((row) => mapComment(row, likedIds));
   const commentMap = new Map(mapped.map((comment) => [comment.id, { ...comment, replies: [] as PropertyComment[] }]));
   const roots: PropertyComment[] = [];
 
@@ -123,51 +127,59 @@ export function buildCommentTreeWithProfiles(
   return sortCommentTree(roots, "newest");
 }
 
+async function fetchCommentRows(supabase: SupabaseClient, propertyId: string) {
+  const withSnapshot = await supabase
+    .from("comments")
+    .select(commentSelect)
+    .eq("property_id", propertyId)
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (!withSnapshot.error) {
+    return (withSnapshot.data ?? []) as RawCommentRow[];
+  }
+
+  if (hasAuthorSnapshotColumns(withSnapshot.error)) {
+    throw new Error(withSnapshot.error.message);
+  }
+
+  const fallback = await supabase
+    .from("comments")
+    .select(baseCommentSelect)
+    .eq("property_id", propertyId)
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (fallback.error) {
+    throw new Error(fallback.error.message);
+  }
+
+  return ((fallback.data ?? []) as BaseCommentRow[]).map((row) => ({
+    ...row,
+    author_name: null,
+    author_role: null,
+    author_avatar_url: null
+  }));
+}
+
 export async function fetchPropertyCommentsWithClient(
   supabase: SupabaseClient,
   propertyId: string,
   viewerId?: string | null
 ) {
   const [commentsResult, likesResult] = await Promise.all([
-    supabase
-      .from("comments")
-      .select(commentSelect)
-      .eq("property_id", propertyId)
-      .order("is_pinned", { ascending: false })
-      .order("created_at", { ascending: false }),
+    fetchCommentRows(supabase, propertyId),
     viewerId
       ? supabase.from("comment_likes").select("comment_id").eq("user_id", viewerId)
       : Promise.resolve({ data: [], error: null })
   ]);
 
-  if (commentsResult.error) {
-    throw new Error(commentsResult.error.message);
-  }
-
   if (viewerId && likesResult.error) {
     throw new Error(likesResult.error.message);
   }
 
-  const userIds = [...new Set(((commentsResult.data ?? []) as RawCommentRow[]).map((item) => item.user_id))];
-  const profileMap = new Map<string, RawCommentProfile>();
-
-  if (userIds.length) {
-    const { data: profileRows, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, full_name, email, avatar_url, role, created_at")
-      .in("id", userIds);
-
-    if (profileError) {
-      throw new Error(profileError.message);
-    }
-
-    for (const profile of profileRows ?? []) {
-      profileMap.set(profile.id, profile as RawCommentProfile);
-    }
-  }
-
   const likedIds = new Set((likesResult.data ?? []).map((item) => item.comment_id));
-  return buildCommentTreeWithProfiles((commentsResult.data ?? []) as RawCommentRow[], profileMap, likedIds);
+  return buildCommentTree(commentsResult, likedIds);
 }
 
 export function createCommentSummaryLabel(count: number) {

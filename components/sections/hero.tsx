@@ -19,6 +19,8 @@ const heroWords = ["Room", "Apartment", "House"];
 export function Hero({ properties, activeRegions, comingSoonRegions }: { properties: Property[]; activeRegions: Region[]; comingSoonRegions: Region[] }) {
   const router = useRouter();
   const cityOptions = [...activeRegions, ...comingSoonRegions];
+  const featuredProperty = properties[0] ?? null;
+  const secondaryProperty = properties[1] ?? featuredProperty;
   const [selectedCity, setSelectedCity] = useState("Jalal-Abad");
   const [query, setQuery] = useState("");
   const [citiesOpen, setCitiesOpen] = useState(false);
@@ -198,14 +200,30 @@ export function Hero({ properties, activeRegions, comingSoonRegions }: { propert
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.48, delay: 0.06, ease: motionEase }}
         >
-          <motion.div className="absolute left-[42px] top-0 w-[340px]" initial="hidden" animate="show" variants={staggerContainer}>
-            <Reveal amount={0.35}>
-              <PropertyCard property={properties[0]} priority />
-            </Reveal>
-          </motion.div>
-          <motion.div className="absolute bottom-5 right-0 w-[218px]" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.34, delay: 0.14, ease: motionEase }}>
-            <PropertyCard property={properties[1] ?? properties[0]} compact />
-          </motion.div>
+          {featuredProperty && secondaryProperty ? (
+            <>
+              <motion.div className="absolute left-[42px] top-0 w-[340px]" initial="hidden" animate="show" variants={staggerContainer}>
+                <Reveal amount={0.35}>
+                  <PropertyCard property={featuredProperty} priority />
+                </Reveal>
+              </motion.div>
+              <motion.div className="absolute bottom-5 right-0 w-[218px]" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.34, delay: 0.14, ease: motionEase }}>
+                <PropertyCard property={secondaryProperty} compact />
+              </motion.div>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-full max-w-[420px] rounded-[32px] border border-[var(--border)] bg-[var(--card)] p-8 shadow-[var(--shadow-card)]">
+                <p className="text-[14px] font-medium uppercase tracking-[0.18em] text-[var(--primary)]">StudentNest</p>
+                <h3 className="mt-4 text-[30px] font-medium leading-[1.18] text-[var(--foreground)]">
+                  Student housing listings will appear here.
+                </h3>
+                <p className="mt-4 text-[15px] font-normal leading-[1.8] text-[var(--muted)]">
+                  Add your first verified property in the dashboard and it will show up on the homepage automatically.
+                </p>
+              </div>
+            </div>
+          )}
           <div className="absolute right-[138px] top-[270px] flex h-16 w-14 items-center justify-center">
             <div className="absolute bottom-0 h-4 w-4 rounded-full bg-[var(--primary)]" />
             <div className="absolute top-0 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-[0_10px_30px_rgba(23,166,115,0.32)]">

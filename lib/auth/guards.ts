@@ -20,7 +20,12 @@ export async function getCurrentSession(): Promise<AppUserSession | null> {
 
   if (!user?.id || !user.email) return null;
 
-  const profile = await getProfileForUser(supabase, user);
+  let profile = null;
+  try {
+    profile = await getProfileForUser(supabase, user);
+  } catch {
+    profile = null;
+  }
 
   return {
     id: user.id,

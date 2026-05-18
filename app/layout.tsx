@@ -8,6 +8,7 @@ import { AdminSettingsProvider } from "@/components/providers/admin-settings-pro
 import { MotionProvider } from "@/components/providers/motion-provider";
 import { SavedPropertiesProvider } from "@/components/providers/saved-properties-provider";
 import { getPlatformSettings } from "@/lib/db/queries";
+import { THEME_COOKIE_SCRIPT } from "@/lib/security";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -54,7 +55,7 @@ export default async function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: "try{if(document.cookie.split('; ').find(function(item){return item.indexOf('studentnest-theme=')===0;})?.split('=')[1]==='dark'){document.documentElement.classList.add('dark')}}catch(e){}"
+            __html: THEME_COOKIE_SCRIPT
           }}
         />
       </head>

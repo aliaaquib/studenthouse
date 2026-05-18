@@ -8,6 +8,8 @@ import { PropertyImage } from "@/components/ui/property-image";
 import type { Property } from "@/types/property";
 
 export function Listings({ properties }: { properties: Property[] }) {
+  const hasProperties = properties.length > 0;
+
   return (
     <section className="bg-[var(--background)] py-16 sm:py-20 md:bg-gradient-to-b md:from-[var(--background)] md:to-[var(--surface)]">
       <div className="section-frame">
@@ -41,64 +43,75 @@ export function Listings({ properties }: { properties: Property[] }) {
           </Button>
         </div>
 
-        <div className="mt-12 flex snap-x snap-mandatory gap-8 overflow-x-auto pb-6 scroll-smooth md:hidden">
-          {properties.map((property) => (
-            <Link
-              key={property.slug}
-              href={`/properties/${property.slug}`}
-              className="w-[82vw] max-w-[330px] shrink-0 snap-start overflow-hidden rounded-[28px] bg-[var(--card)]"
-            >
-              <div className="h-[190px] overflow-hidden rounded-t-[28px]">
-                <PropertyImage
-                  src={property.image}
-                  alt={property.name}
-                  width={660}
-                  height={380}
-                  sizes="82vw"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="px-6 py-5">
-                <p className="text-[20px] font-bold leading-[1.35] text-[var(--primary)]">
-                  {property.price}
-                  <span className="ml-1 text-[12px] font-medium text-[var(--muted)]">/month</span>
-                </p>
-                <h3 className="mt-2 text-[18px] font-semibold leading-[1.35] text-[#202328]">{property.name}</h3>
-                <p className="mt-2 flex items-center gap-1.5 text-[13px] font-normal leading-[1.5] text-[var(--muted)]">
-                  <MapPin size={15} /> {property.distance}
-                </p>
-                <div className="my-4 h-px bg-[var(--border)]" />
-                <div className="grid grid-cols-2 gap-2 text-[12px] font-medium text-[var(--muted-strong)]">
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <Users size={16} color="var(--primary)" /> {property.roommates} roommates
-                  </span>
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <Sofa size={16} color="var(--primary)" /> {property.furnished ? "Furnished" : "Unfurnished"}
-                  </span>
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <Wifi size={16} color="var(--primary)" /> {property.utilitiesIncluded ? "Bills included" : "Bills separate"}
-                  </span>
-                  <span className="truncate rounded-full bg-[var(--surface)] px-2 py-1 text-center text-[var(--primary)]">{property.roomType}</span>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {property.badges.slice(0, 3).map((badge) => (
-                    <span key={badge} className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-medium text-[var(--muted-strong)]">
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-10 hidden snap-x snap-mandatory gap-6 overflow-x-auto pb-4 scroll-smooth sm:mt-14 md:flex">
-          {properties.map((property) => (
-            <div key={property.slug} className="w-[min(86vw,352px)] shrink-0 snap-start">
-              <PropertyCard property={property} />
+        {hasProperties ? (
+          <>
+            <div className="mt-12 flex snap-x snap-mandatory gap-8 overflow-x-auto pb-6 scroll-smooth md:hidden">
+              {properties.map((property) => (
+                <Link
+                  key={property.slug}
+                  href={`/properties/${property.slug}`}
+                  className="w-[82vw] max-w-[330px] shrink-0 snap-start overflow-hidden rounded-[28px] bg-[var(--card)]"
+                >
+                  <div className="h-[190px] overflow-hidden rounded-t-[28px]">
+                    <PropertyImage
+                      src={property.image}
+                      alt={property.name}
+                      width={660}
+                      height={380}
+                      sizes="82vw"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="px-6 py-5">
+                    <p className="text-[20px] font-bold leading-[1.35] text-[var(--primary)]">
+                      {property.price}
+                      <span className="ml-1 text-[12px] font-medium text-[var(--muted)]">/month</span>
+                    </p>
+                    <h3 className="mt-2 text-[18px] font-semibold leading-[1.35] text-[#202328]">{property.name}</h3>
+                    <p className="mt-2 flex items-center gap-1.5 text-[13px] font-normal leading-[1.5] text-[var(--muted)]">
+                      <MapPin size={15} /> {property.distance}
+                    </p>
+                    <div className="my-4 h-px bg-[var(--border)]" />
+                    <div className="grid grid-cols-2 gap-2 text-[12px] font-medium text-[var(--muted-strong)]">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <Users size={16} color="var(--primary)" /> {property.roommates} roommates
+                      </span>
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <Sofa size={16} color="var(--primary)" /> {property.furnished ? "Furnished" : "Unfurnished"}
+                      </span>
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <Wifi size={16} color="var(--primary)" /> {property.utilitiesIncluded ? "Bills included" : "Bills separate"}
+                      </span>
+                      <span className="truncate rounded-full bg-[var(--surface)] px-2 py-1 text-center text-[var(--primary)]">{property.roomType}</span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {property.badges.slice(0, 3).map((badge) => (
+                        <span key={badge} className="rounded-full bg-[var(--surface)] px-3 py-1 text-[11px] font-medium text-[var(--muted-strong)]">
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-          ))}
-        </div>
+
+            <div className="mt-10 hidden snap-x snap-mandatory gap-6 overflow-x-auto pb-4 scroll-smooth sm:mt-14 md:flex">
+              {properties.map((property) => (
+                <div key={property.slug} className="w-[min(86vw,352px)] shrink-0 snap-start">
+                  <PropertyCard property={property} />
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="mt-12 rounded-[28px] border border-[var(--border)] bg-[var(--card)] px-6 py-10 text-center shadow-[var(--shadow-card)] sm:mt-14 sm:px-10">
+            <h3 className="text-[24px] font-medium leading-[1.3] text-[var(--foreground)]">No apartments published yet</h3>
+            <p className="mx-auto mt-3 max-w-[560px] text-[15px] font-normal leading-[1.8] text-[var(--muted)]">
+              Once properties are added in the admin or agent dashboard, they will appear here automatically.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

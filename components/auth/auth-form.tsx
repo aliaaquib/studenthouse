@@ -7,6 +7,7 @@ import { Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { canAccessAdmin, canAccessAgentDashboard, type AppRole } from "@/lib/rbac";
+import { publicErrorMessage, safeRedirectPath, sanitizeSingleLineText } from "@/lib/security";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Mode = "login" | "signup";
@@ -32,6 +33,7 @@ export function AuthForm({
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const safeNextPath = safeRedirectPath(nextPath, "/dashboard");
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(message ?? "");
@@ -42,9 +44,14 @@ export function AuthForm({
       return;
     }
 
-    const email = String(formData.get("email") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
-    const fullName = String(formData.get("fullName") ?? "").trim();
+    const fullName = sanitizeSingleLineText(String(formData.get("fullName") ?? ""), 80);
+
+    if (!email || !password || (mode === "signup" && password.length < 8)) {
+      setError(mode === "signup" ? "Use a valid email and a password with at least 8 characters." : "Use a valid email and password.");
+      return;
+    }
 
     setPending(true);
     setError("");
@@ -62,12 +69,12 @@ export function AuthForm({
         });
 
         if (signUpError) {
-          setError(signUpError.message);
+          setError(publicErrorMessage(signUpError, "Unable to create your account right now."));
           return;
         }
 
         if (data.session) {
-          router.replace("/dashboard");
+          router.replace(safeNextPath);
           router.refresh();
           return;
         }
@@ -78,26 +85,28 @@ export function AuthForm({
 
       const { error: signInError, data } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) {
-        setError(signInError.message);
+        setError(publicErrorMessage(signInError, "Unable to sign in with those credentials."));
         return;
       }
 
       const role = await getUserRole(supabase, data.user.id);
 
-      if (nextPath.startsWith("/admin") && !canAccessAdmin(role)) {
+      if (safeNextPath.startsWith("/admin") && !canAccessAdmin(role)) {
         setError("This account does not have admin access.");
         await supabase.auth.signOut();
         return;
       }
 
-      if (nextPath.startsWith("/agent") && !canAccessAgentDashboard(role)) {
+      if (safeNextPath.startsWith("/agent") && !canAccessAgentDashboard(role)) {
         setError("This account does not have agent access.");
         await supabase.auth.signOut();
         return;
       }
 
-      router.replace(nextPath);
+      router.replace(safeNextPath);
       router.refresh();
+    } catch (error) {
+      setError(publicErrorMessage(error, "Unable to complete authentication right now."));
     } finally {
       setPending(false);
     }
@@ -111,7 +120,7 @@ export function AuthForm({
 
     setPending(true);
     const redirectTo = typeof window !== "undefined"
-      ? `${window.location.origin}/dashboard`
+      ? `${window.location.origin}${safeNextPath}`
       : undefined;
 
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -120,7 +129,7 @@ export function AuthForm({
     });
 
     if (oauthError) {
-      setError(oauthError.message);
+      setError(publicErrorMessage(oauthError, "Unable to continue with Google right now."));
       setPending(false);
     }
   }
@@ -174,7 +183,7 @@ export function AuthForm({
 
       <p className="mt-4 text-center text-[13px] font-medium text-[var(--muted)]">
         {mode === "login" ? "New here?" : "Already have an account?"}{" "}
-        <Link href={mode === "login" ? `/login?mode=signup&next=${encodeURIComponent(nextPath)}` : `/login?mode=login&next=${encodeURIComponent(nextPath)}`} className="text-[var(--primary)]">
+        <Link href={mode === "login" ? `/login?mode=signup&next=${encodeURIComponent(safeNextPath)}` : `/login?mode=login&next=${encodeURIComponent(safeNextPath)}`} className="text-[var(--primary)]">
           {mode === "login" ? "Create an account" : "Sign in"}
         </Link>
       </p>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth/auth-form";
+import { safeRedirectPath } from "@/lib/security";
 
 export const metadata: Metadata = {
   title: "Login | StudentNest",
@@ -19,7 +20,7 @@ export default async function LoginPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const nextPath = readParam(params?.next) ?? "/dashboard";
+  const nextPath = safeRedirectPath(readParam(params?.next), "/dashboard");
   const error = readParam(params?.error);
   const mode = readParam(params?.mode) === "signup" ? "signup" : "login";
   const message = error === "expired" ? "Your session expired. Please sign in again." : undefined;
@@ -29,7 +30,7 @@ export default async function LoginPage({
       <section className="grid min-h-screen place-items-center px-4 py-12">
         <AuthForm
           mode={mode}
-          nextPath={nextPath.startsWith("/") ? nextPath : "/dashboard"}
+          nextPath={nextPath}
           message={message}
         />
       </section>

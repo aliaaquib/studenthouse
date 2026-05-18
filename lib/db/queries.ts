@@ -1,7 +1,9 @@
+import { unstable_cache } from "next/cache";
 import { defaultAdminSettings, mapPlatformSettingsRow } from "@/lib/admin-settings";
 import { getCurrentSession, type AppUserSession } from "@/lib/auth/guards";
 import { mapDbProperty, mapDbRegion, mapDbUniversity, regionToCity, type DbProperty } from "@/lib/db/mappers";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { City, Property, PropertyFilters, Region, University } from "@/types/property";
 
@@ -27,6 +29,24 @@ type PlatformSettingsRow = {
   brand: string | null;
   currency: string | null;
   homepage_text: string | null;
+};
+
+type UniversityDbRow = {
+  id: string;
+  name: string;
+  short_name: string | null;
+  city: string;
+  region: string;
+  description: string | null;
+  image_url: string | null;
+};
+
+type RegionDbRow = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  coming_soon: boolean;
+  created_at: string;
 };
 
 type InquiryRow = {
@@ -88,7 +108,7 @@ function groupRegionMetrics(properties: Property[]) {
 }
 
 async function findUniversityIdByName(universityName: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = getSupabasePublicClient() ?? await createSupabaseServerClient();
   if (!supabase) return null;
 
   const bareName = universityName.replace(/\s+\([^)]+\)$/, "");
@@ -106,60 +126,100 @@ async function findUniversityIdByName(universityName: string) {
   return data?.id ?? null;
 }
 
+const getCachedPublicPropertyRows = unstable_cache(
+  async () => {
+    const supabase = getSupabasePublicClient();
+    if (!supabase) return [] as DbProperty[];
+
+    const { data, error } = await supabase
+      .from("properties")
+      .select(propertySelect)
+      .eq("verified", true)
+      .eq("listing_status", "active")
+      .order("featured", { ascending: false })
+      .order("featured_rank", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (error || !data) return [] as DbProperty[];
+    return data as DbProperty[];
+  },
+  ["public-properties"],
+  { revalidate: 120, tags: ["public-properties"] }
+);
+
+const getCachedMappedPublicProperties = unstable_cache(
+  async () => {
+    const rows = await getCachedPublicPropertyRows();
+    return rows.map(mapDbProperty);
+  },
+  ["public-properties-mapped"],
+  { revalidate: 120, tags: ["public-properties"] }
+);
+
+function applyPublicPropertyFilters(properties: Property[], filters?: Partial<PropertyFilters>) {
+  if (!filters) return properties;
+
+  return properties.filter((property) => {
+    const matchesRegion = !filters.region || filters.region === "Any" || property.region === filters.region;
+    const matchesRoom = !filters.roomType || filters.roomType === "Any" || property.roomType === filters.roomType;
+    const matchesFurnished =
+      !filters.furnished ||
+      filters.furnished === "Any" ||
+      (filters.furnished === "Furnished" ? property.furnished : !property.furnished);
+    const matchesUtilities =
+      !filters.utilities ||
+      filters.utilities === "Any" ||
+      (filters.utilities === "Included" ? property.utilitiesIncluded : !property.utilitiesIncluded);
+    const matchesGender =
+      !filters.genderPreference || filters.genderPreference === "Any" || property.genderPreference === filters.genderPreference;
+    const matchesBudget =
+      !filters.budget ||
+      filters.budget === "Any" ||
+      (filters.budget === "Under 15,000 KGS" && property.priceMonthly < 15000) ||
+      (filters.budget === "15,000 - 22,000 KGS" && property.priceMonthly >= 15000 && property.priceMonthly <= 22000) ||
+      (filters.budget === "22,000+ KGS" && property.priceMonthly > 22000);
+
+    return matchesRegion && matchesRoom && matchesFurnished && matchesUtilities && matchesGender && matchesBudget;
+  });
+}
+
 export async function getPublicProperties(filters?: Partial<PropertyFilters>): Promise<Property[]> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return [];
-
-  let query = supabase
-    .from("properties")
-    .select(propertySelect)
-    .eq("verified", true)
-    .eq("listing_status", "active")
-    .order("featured", { ascending: false })
-    .order("featured_rank", { ascending: true })
-    .order("created_at", { ascending: false });
-
-  if (filters?.region && filters.region !== "Any") {
-    query = query.eq("region", filters.region);
-  }
-
-  if (filters?.roomType && filters.roomType !== "Any") {
-    query = query.eq("room_type", filters.roomType);
-  }
-
-  if (filters?.furnished && filters.furnished !== "Any") {
-    query = query.eq("furnished", filters.furnished === "Furnished");
-  }
-
-  if (filters?.utilities && filters.utilities !== "Any") {
-    query = query.eq("utilities_included", filters.utilities === "Included");
-  }
-
-  if (filters?.genderPreference && filters.genderPreference !== "Any") {
-    query = query.eq("gender_preference", filters.genderPreference);
-  }
-
-  if (filters?.budget && filters.budget !== "Any") {
-    if (filters.budget === "Under 15,000 KGS") query = query.lt("monthly_rent", 15000);
-    if (filters.budget === "15,000 - 22,000 KGS") query = query.gte("monthly_rent", 15000).lte("monthly_rent", 22000);
-    if (filters.budget === "22,000+ KGS") query = query.gt("monthly_rent", 22000);
-  }
+  const [rows, baseProperties] = await Promise.all([
+    getCachedPublicPropertyRows(),
+    getCachedMappedPublicProperties()
+  ]);
+  const rowById = new Map(rows.map((row) => [row.id, row]));
+  let properties = baseProperties;
 
   if (filters?.university && filters.university !== "Any") {
     const universityId = await findUniversityIdByName(filters.university);
     if (universityId) {
-      query = query.eq("nearby_university_id", universityId);
+      properties = properties.filter((property) => {
+        const row = property.id ? rowById.get(property.id) : undefined;
+        return row?.nearby_university_id === universityId;
+      });
     }
   }
 
+  properties = applyPublicPropertyFilters(properties, filters);
+
   if (filters?.query?.trim()) {
-    const term = `%${filters.query.trim()}%`;
-    query = query.or(`title.ilike.${term},location.ilike.${term},region.ilike.${term},description.ilike.${term}`);
+    const term = filters.query.trim().toLowerCase();
+    properties = properties.filter((property) =>
+      [
+        property.title,
+        property.location,
+        property.region,
+        property.description,
+        property.university
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term)
+    );
   }
 
-  const { data, error } = await query;
-  if (error || !data) return [];
-  return (data as DbProperty[]).map(mapDbProperty);
+  return properties;
 }
 
 export async function getAdminProperties(): Promise<Property[]> {
@@ -198,34 +258,31 @@ export async function getManagedProperties(session: Pick<AppUserSession, "id" | 
 }
 
 export async function getPropertyBySlug(slug: string) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return null;
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select(propertySelect)
-    .eq("slug", slug)
-    .eq("verified", true)
-    .eq("listing_status", "active")
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return mapDbProperty(data as DbProperty);
+  const rows = await getCachedPublicPropertyRows();
+  const row = rows.find((item) => item.slug === slug);
+  return row ? mapDbProperty(row) : null;
 }
 
-export async function getUniversities(): Promise<University[]> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return [];
+const getCachedUniversityRows = unstable_cache(
+  async () => {
+    const supabase = getSupabasePublicClient();
+    if (!supabase) return [] as UniversityDbRow[];
+    const { data, error } = await supabase.from("universities").select("*").order("name");
+    if (error || !data) return [] as UniversityDbRow[];
+    return data as UniversityDbRow[];
+  },
+  ["universities"],
+  { revalidate: 300, tags: ["universities"] }
+);
 
-  const [universitiesResult, properties] = await Promise.all([
-    supabase.from("universities").select("*").order("name"),
+export async function getUniversities(): Promise<University[]> {
+  const [universityRows, properties] = await Promise.all([
+    getCachedUniversityRows(),
     getPublicProperties()
   ]);
 
-  if (universitiesResult.error || !universitiesResult.data) return [];
-
   const metrics = groupUniversityMetrics(properties);
-  const uniqueRows = universitiesResult.data.filter((row, index, rows) => {
+  const uniqueRows = universityRows.filter((row, index, rows) => {
     const identity = (row.short_name || row.name).trim().toLowerCase();
     return rows.findIndex((candidate) => ((candidate.short_name || candidate.name).trim().toLowerCase() === identity)) === index;
   });
@@ -244,23 +301,41 @@ export async function getUniversities(): Promise<University[]> {
   });
 }
 
-export async function getRegions(): Promise<{ activeRegions: Region[]; comingSoonRegions: Region[]; cities: City[] }> {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) {
-    return { activeRegions: [], comingSoonRegions: [], cities: [] };
-  }
+const getCachedRegionRows = unstable_cache(
+  async () => {
+    const supabase = getSupabasePublicClient();
+    if (!supabase) return [] as RegionDbRow[];
+    const { data, error } = await supabase.from("regions").select("*").order("created_at");
+    if (error || !data) return [] as RegionDbRow[];
+    return data as RegionDbRow[];
+  },
+  ["regions"],
+  { revalidate: 300, tags: ["regions"] }
+);
 
-  const { data, error } = await supabase.from("regions").select("*").order("created_at");
-  if (error || !data) {
-    return { activeRegions: [], comingSoonRegions: [], cities: [] };
-  }
+const getCachedPlatformSettings = unstable_cache(
+  async () => {
+    const supabase = getSupabasePublicClient();
+    if (!supabase) return null;
+    const { data } = await supabase
+      .from("platform_settings")
+      .select("whatsapp_number, brand, currency, homepage_text")
+      .eq("id", 1)
+      .maybeSingle();
+    return data as PlatformSettingsRow | null;
+  },
+  ["platform-settings"],
+  { revalidate: 300, tags: ["platform-settings"] }
+);
+
+export async function getRegions(): Promise<{ activeRegions: Region[]; comingSoonRegions: Region[]; cities: City[] }> {
+  const [data, properties] = await Promise.all([getCachedRegionRows(), getPublicProperties()]);
 
   const regions = data
     .map(mapDbRegion)
     .filter((region) => region.name !== "Manas");
   const activeRegions = regions.filter((region) => region.status === "active");
   const comingSoonRegions = regions.filter((region) => region.status === "coming-soon");
-  const properties = await getPublicProperties();
   const regionMetrics = groupRegionMetrics(properties);
 
   return {
@@ -278,16 +353,8 @@ export async function getRegions(): Promise<{ activeRegions: Region[]; comingSoo
 }
 
 export async function getPlatformSettings() {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return defaultAdminSettings;
-
-  const { data } = await supabase
-    .from("platform_settings")
-    .select("whatsapp_number, brand, currency, homepage_text")
-    .eq("id", 1)
-    .maybeSingle();
-
-  return mapPlatformSettingsRow(data as PlatformSettingsRow | null);
+  const settings = await getCachedPlatformSettings();
+  return settings ? mapPlatformSettingsRow(settings) : defaultAdminSettings;
 }
 
 export async function getCurrentFavoriteIds() {
