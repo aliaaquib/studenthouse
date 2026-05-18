@@ -90,6 +90,34 @@ create table if not exists public.properties (
   updated_at timestamptz not null default now()
 );
 
+alter table public.properties add column if not exists currency text not null default 'KGS';
+alter table public.properties add column if not exists region text not null default 'Jalal-Abad';
+alter table public.properties add column if not exists nearby_university_id uuid references public.universities(id) on delete set null;
+alter table public.properties add column if not exists distance_from_university text;
+alter table public.properties add column if not exists shared_room boolean not null default false;
+alter table public.properties add column if not exists furnished boolean not null default true;
+alter table public.properties add column if not exists utilities_included boolean not null default true;
+alter table public.properties add column if not exists gender_preference text not null default 'Mixed';
+alter table public.properties add column if not exists amenities text[] not null default '{}';
+alter table public.properties add column if not exists roommate_count integer not null default 0;
+alter table public.properties add column if not exists verified boolean not null default false;
+alter table public.properties add column if not exists featured boolean not null default false;
+alter table public.properties add column if not exists featured_rank integer not null default 0;
+alter table public.properties add column if not exists listing_status text not null default 'active';
+alter table public.properties add column if not exists available_from date;
+alter table public.properties add column if not exists whatsapp_number text not null default '+996555011697';
+alter table public.properties add column if not exists created_by uuid references public.profiles(id) on delete set null;
+alter table public.properties add column if not exists created_at timestamptz not null default now();
+alter table public.properties add column if not exists updated_at timestamptz not null default now();
+alter table public.properties drop constraint if exists properties_room_type_check;
+alter table public.properties add constraint properties_room_type_check check (room_type in ('Studio', 'Private room', 'Shared room', 'Apartment', 'Dom'));
+alter table public.properties drop constraint if exists properties_gender_preference_check;
+alter table public.properties add constraint properties_gender_preference_check check (gender_preference in ('Female only', 'Male only', 'Mixed'));
+alter table public.properties drop constraint if exists properties_listing_status_check;
+alter table public.properties add constraint properties_listing_status_check check (listing_status in ('active', 'draft', 'unavailable'));
+alter table public.properties drop constraint if exists properties_roommate_count_check;
+alter table public.properties add constraint properties_roommate_count_check check (roommate_count >= 0);
+
 create table if not exists public.property_images (
   id uuid primary key default gen_random_uuid(),
   property_id uuid not null references public.properties(id) on delete cascade,
@@ -145,6 +173,15 @@ create table if not exists public.comments (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.comments add column if not exists is_edited boolean not null default false;
+alter table public.comments add column if not exists is_hidden boolean not null default false;
+alter table public.comments add column if not exists is_pinned boolean not null default false;
+alter table public.comments add column if not exists likes_count integer not null default 0;
+alter table public.comments add column if not exists updated_at timestamptz not null default now();
+alter table public.comments add column if not exists author_name text;
+alter table public.comments add column if not exists author_role public.user_role;
+alter table public.comments add column if not exists author_avatar_url text;
 
 create table if not exists public.comment_likes (
   id uuid primary key default gen_random_uuid(),
@@ -219,6 +256,8 @@ create or replace function public.is_admin()
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1 from public.profiles
@@ -230,6 +269,8 @@ create or replace function public.is_agent()
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1 from public.profiles
@@ -241,6 +282,8 @@ create or replace function public.is_admin_or_agent()
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select public.is_admin() or public.is_agent();
 $$;
@@ -313,8 +356,7 @@ drop policy if exists "Public can read verified properties" on public.properties
 create policy "Public can read verified properties" on public.properties
 for select using (
   verified = true
-  or public.is_admin()
-  or (public.is_agent() and created_by = auth.uid())
+  or auth.uid() is not null
 );
 drop policy if exists "Admins manage properties" on public.properties;
 drop policy if exists "Admins insert properties" on public.properties;
@@ -322,17 +364,15 @@ drop policy if exists "Admins update properties" on public.properties;
 drop policy if exists "Admins delete properties" on public.properties;
 drop policy if exists "Agents insert own properties" on public.properties;
 drop policy if exists "Agents update own properties" on public.properties;
+drop policy if exists "Admins and agents insert properties" on public.properties;
+drop policy if exists "Admins and agents update properties" on public.properties;
 create policy "Admins insert properties" on public.properties
-for insert with check (public.is_admin());
+for insert with check (auth.uid() is not null and public.is_admin_or_agent());
 create policy "Admins update properties" on public.properties
-for update using (public.is_admin()) with check (public.is_admin());
+for update using (auth.uid() is not null and public.is_admin_or_agent())
+with check (auth.uid() is not null and public.is_admin_or_agent());
 create policy "Admins delete properties" on public.properties
 for delete using (public.is_admin());
-create policy "Agents insert own properties" on public.properties
-for insert with check (public.is_agent() and created_by = auth.uid());
-create policy "Agents update own properties" on public.properties
-for update using (public.is_agent() and created_by = auth.uid())
-with check (public.is_agent() and created_by = auth.uid());
 
 drop policy if exists "Public can read property images" on public.property_images;
 create policy "Public can read property images" on public.property_images for select using (true);
@@ -341,29 +381,10 @@ drop policy if exists "Admins insert property images" on public.property_images;
 drop policy if exists "Admins update property images" on public.property_images;
 drop policy if exists "Admins delete property images" on public.property_images;
 drop policy if exists "Agents manage own property images" on public.property_images;
-create policy "Admins insert property images" on public.property_images
-for insert with check (public.is_admin());
-create policy "Admins update property images" on public.property_images
-for update using (public.is_admin()) with check (public.is_admin());
-create policy "Admins delete property images" on public.property_images
-for delete using (public.is_admin());
-create policy "Agents manage own property images" on public.property_images
-for all using (
-  public.is_agent()
-  and exists (
-    select 1 from public.properties
-    where properties.id = property_images.property_id
-      and properties.created_by = auth.uid()
-  )
-)
-with check (
-  public.is_agent()
-  and exists (
-    select 1 from public.properties
-    where properties.id = property_images.property_id
-      and properties.created_by = auth.uid()
-  )
-);
+drop policy if exists "Admins and agents manage property images" on public.property_images;
+create policy "Admins and agents manage property images" on public.property_images
+for all using (auth.uid() is not null and public.is_admin_or_agent())
+with check (auth.uid() is not null and public.is_admin_or_agent());
 
 drop policy if exists "Users manage own favorites" on public.favorites;
 create policy "Users manage own favorites" on public.favorites for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

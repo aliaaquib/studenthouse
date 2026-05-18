@@ -73,6 +73,57 @@ async function ensureTrustedMutationRequest() {
   return isTrustedOrigin(requestHeaders);
 }
 
+function propertySaveErrorMessage(error: unknown) {
+  const message = getSupabaseErrorMessage(error);
+  const lowered = message.toLowerCase();
+
+  if (process.env.NODE_ENV === "development" && message) {
+    return `Unable to save property: ${message}`;
+  }
+
+  if (lowered.includes("row-level security") || lowered.includes("rls") || lowered.includes("permission denied")) {
+    return "Database permissions blocked this save. Please run the latest Supabase schema and confirm this user has the agent role.";
+  }
+
+  if (lowered.includes("schema cache") || lowered.includes("could not find") || lowered.includes("column")) {
+    return "Your Supabase database schema is behind the app. Run the latest schema.sql, then reload the dashboard.";
+  }
+
+  if (lowered.includes("foreign key") || lowered.includes("created_by") || lowered.includes("profiles")) {
+    return "This agent profile is not initialized in Supabase. Log out and back in, then confirm the profile role is agent.";
+  }
+
+  if (lowered.includes("check constraint") || lowered.includes("room_type")) {
+    return "This value is not allowed by the current database constraints. Run the latest schema.sql to update room types and listing rules.";
+  }
+
+  if (lowered.includes("invalid input syntax") || lowered.includes("date/time field")) {
+    return "The availability date is invalid. Choose a valid date and try again.";
+  }
+
+  if (lowered.includes("duplicate") || lowered.includes("unique")) {
+    return "A property with this slug already exists. Try a different property title.";
+  }
+
+  return message ? sanitizeSingleLineText(message, 220) : publicErrorMessage(error, "Unable to save property.");
+}
+
+function getSupabaseErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (!error || typeof error !== "object") return "";
+
+  const record = error as Record<string, unknown>;
+  return [record.message, record.details, record.hint, record.code]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .join(" ");
+}
+
+function createPropertyId() {
+  return globalThis.crypto?.randomUUID?.() ?? "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (character) =>
+    (Number(character) ^ Math.floor(Math.random() * 16) & 15 >> Number(character) / 4).toString(16)
+  );
+}
+
 async function findUniversityId(universityName: string, supabase: NonNullable<Awaited<ReturnType<typeof getWriteClient>>>) {
 
   const { data } = await supabase
@@ -82,6 +133,22 @@ async function findUniversityId(universityName: string, supabase: NonNullable<Aw
     .maybeSingle();
 
   return data?.id ?? null;
+}
+
+async function ensureProfileExistsForPropertyOwner(session: NonNullable<Awaited<ReturnType<typeof getCurrentSession>>>) {
+  const adminClient = getSupabaseAdminClient();
+  if (!adminClient) return { ok: true };
+
+  const { error } = await adminClient
+    .from("profiles")
+    .upsert({
+      id: session.id,
+      email: session.email,
+      full_name: session.fullName,
+      role: session.role
+    }, { onConflict: "id" });
+
+  return error ? { ok: false, message: propertySaveErrorMessage(error) } : { ok: true };
 }
 
 async function uploadPropertyImages(propertyId: string, slug: string, images: string[]) {
@@ -171,6 +238,11 @@ export async function upsertPropertyAction(payload: PropertyPayload) {
   if (!supabase) return { ok: false, skipped: true, message: "Supabase is not configured." };
 
   const universityId = await findUniversityId(payload.universityName, supabase);
+  const profileCheck = await ensureProfileExistsForPropertyOwner(session);
+  if (!profileCheck.ok) {
+    return { ok: false, message: profileCheck.message ?? "Unable to initialize this account profile." };
+  }
+
   let existingPropertyOwnerId: string | null = null;
 
   if (payload.id) {
@@ -211,18 +283,28 @@ export async function upsertPropertyAction(payload: PropertyPayload) {
     created_by: payload.id ? (existingPropertyOwnerId ?? session.id) : session.id
   };
 
-  const query = payload.id
-    ? supabase.from("properties").update(propertyRow).eq("id", payload.id).select("id").single()
-    : supabase.from("properties").insert(propertyRow).select("id").single();
-  const { data, error } = await query;
-  if (error || !data) return { ok: false, message: publicErrorMessage(error, "Unable to save property.") };
+  const propertyId = payload.id ?? createPropertyId();
+  const { error, count } = payload.id
+    ? await supabase.from("properties").update(propertyRow, { count: "exact" }).eq("id", payload.id)
+    : await supabase.from("properties").insert({ ...propertyRow, id: propertyId });
 
-  const existingStoragePaths = await listPropertyStoragePaths(data.id);
-  const normalizedImages = await uploadPropertyImages(data.id, payload.slug, payload.images);
-  await supabase.from("property_images").delete().eq("property_id", data.id);
+  if (error) {
+    return {
+      ok: false,
+      message: propertySaveErrorMessage(error)
+    };
+  }
+
+  if (payload.id && count === 0) {
+    return { ok: false, message: "No property was updated. Check that this listing still exists and belongs to this account." };
+  }
+
+  const existingStoragePaths = await listPropertyStoragePaths(propertyId);
+  const normalizedImages = await uploadPropertyImages(propertyId, payload.slug, payload.images);
+  await supabase.from("property_images").delete().eq("property_id", propertyId);
   if (normalizedImages.length) {
     await supabase.from("property_images").insert(normalizedImages.map((imageUrl, index) => ({
-      property_id: data.id,
+      property_id: propertyId,
       image_url: imageUrl,
       sort_order: index
     })));
@@ -234,7 +316,7 @@ export async function upsertPropertyAction(payload: PropertyPayload) {
   await deletePropertyStorageObjects(staleStoragePaths);
 
   revalidatePropertyViews();
-  return { ok: true, id: data.id };
+  return { ok: true, id: propertyId };
 }
 
 export async function deletePropertyAction(id: string) {

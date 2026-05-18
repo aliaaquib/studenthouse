@@ -32,6 +32,11 @@ const csp = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb"
+    }
+  },
   images: {
     remotePatterns: [
       ...(supabaseHostname ? [{
