@@ -1,11 +1,8 @@
-import { createHash } from "node:crypto";
 import type { NextConfig } from "next";
-import { THEME_COOKIE_SCRIPT } from "./lib/security";
 
 const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
   : undefined;
-const scriptHash = createHash("sha256").update(THEME_COOKIE_SCRIPT).digest("base64");
 const isDevelopment = process.env.NODE_ENV !== "production";
 const scriptSources = isDevelopment
   ? [
@@ -16,7 +13,7 @@ const scriptSources = isDevelopment
     ].join(" ")
   : [
       "'self'",
-      `'sha256-${scriptHash}'`,
+      "'unsafe-inline'",
       "https://va.vercel-scripts.com"
     ].join(" ");
 const csp = [
