@@ -22,7 +22,6 @@ import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import type { AppUserSession } from "@/lib/auth/guards";
 import { upsertPropertyAction } from "@/lib/actions/admin-data";
-import { assets } from "@/lib/assets";
 import { motionEase } from "@/components/motion";
 import { PropertyImage } from "@/components/ui/property-image";
 import { Button } from "@/components/ui/button";
@@ -47,27 +46,34 @@ const agentNavItems = [
 
 const propertySchema = z.object({
   title: z.string().min(3, "Property title is required"),
-  priceMonthly: z.coerce.number().min(1000, "Monthly rent must be at least 1,000 KGS"),
+  priceMonthly: z.preprocess(
+    (value) => (value === "" || value === null || typeof value === "undefined" ? undefined : Number(value)),
+    z.number({ required_error: "Monthly rent is required", invalid_type_error: "Monthly rent is required" }).min(1000, "Monthly rent must be at least 1,000 KGS")
+  ),
   description: z.string().min(20, "Description needs more detail"),
   location: z.string().min(3, "Location is required"),
   city: z.string().min(2, "City is required"),
   region: z.string().min(2, "Region is required"),
   university: z.string().min(3, "Nearby university is required"),
   distance: z.string().min(2, "Distance is required"),
-  roomType: z.enum(["Studio", "Private room", "Shared room", "Apartment"]),
-  roommates: z.coerce.number().min(0).max(8),
+  roomType: z.string().refine((value) => ["Studio", "Private room", "Shared room", "Apartment", "Dom"].includes(value), "Room type is required") as z.ZodType<"Studio" | "Private room" | "Shared room" | "Apartment" | "Dom">,
+  roommates: z.preprocess(
+    (value) => (value === "" || value === null || typeof value === "undefined" ? undefined : Number(value)),
+    z.number({ required_error: "Roommate count is required", invalid_type_error: "Roommate count is required" }).min(0).max(8)
+  ),
   furnished: z.boolean(),
   utilitiesIncluded: z.boolean(),
-  genderPreference: z.enum(["Female only", "Male only", "Mixed"]),
+  genderPreference: z.string().refine((value) => ["Female only", "Male only", "Mixed"].includes(value), "Gender preference is required") as z.ZodType<"Female only" | "Male only" | "Mixed">,
   amenities: z.string().min(3, "Add at least one amenity"),
   availabilityDate: z.string().min(1, "Availability date is required"),
   verified: z.boolean(),
   featured: z.boolean(),
-  status: z.enum(["active", "draft", "unavailable"]),
+  status: z.string().refine((value) => ["active", "draft", "unavailable"].includes(value), "Listing status is required") as z.ZodType<"active" | "draft" | "unavailable">,
   images: z.array(z.string()).min(1, "Add at least one image")
 });
 
-type PropertyFormValues = z.infer<typeof propertySchema>;
+type PropertyFormValues = z.input<typeof propertySchema>;
+type PropertySubmitValues = z.output<typeof propertySchema>;
 
 function createSlug(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -77,7 +83,7 @@ function toAgentProperty(property: Property): AgentProperty {
   return { ...property, status: property.status ?? "active" };
 }
 
-function propertyFromValues(values: PropertyFormValues, existing?: AgentProperty): AgentProperty {
+function propertyFromValues(values: PropertySubmitValues, existing?: AgentProperty): AgentProperty {
   const amenities = values.amenities.split(",").map((item) => item.trim()).filter(Boolean);
 
   return {
@@ -108,7 +114,7 @@ function propertyFromValues(values: PropertyFormValues, existing?: AgentProperty
     popular: values.featured,
     verified: values.verified,
     genderPreference: values.genderPreference,
-    type: values.roomType === "Studio" ? "Studio" : values.roomType === "Apartment" ? "Apartment" : "Shared Room",
+    type: values.roomType === "Studio" ? "Studio" : values.roomType === "Apartment" ? "Apartment" : values.roomType === "Dom" ? "Dom" : "Shared Room",
     agent: existing?.agent ?? "Agent managed",
     landlordPhone: existing?.landlordPhone ?? `+${WHATSAPP_PHONE}`,
     description: values.description,
@@ -120,24 +126,24 @@ function propertyFromValues(values: PropertyFormValues, existing?: AgentProperty
 function valuesFromProperty(property?: AgentProperty): PropertyFormValues {
   return {
     title: property?.title ?? "",
-    priceMonthly: property?.priceMonthly ?? 18000,
+    priceMonthly: property?.priceMonthly ?? ("" as unknown as number),
     description: property?.description ?? "",
     location: property?.location ?? "",
-    city: property?.region ?? "Jalal-Abad",
-    region: property?.region ?? "Jalal-Abad",
-    university: property?.university ?? "Jalal-Abad International University (JAIU)",
-    distance: property?.distance ?? "5 mins from campus",
-    roomType: property?.roomType ?? "Shared room",
-    roommates: property?.roommates ?? 2,
-    furnished: property?.furnished ?? true,
-    utilitiesIncluded: property?.utilitiesIncluded ?? true,
-    genderPreference: property?.genderPreference ?? "Mixed",
-    amenities: property?.amenities.join(", ") ?? "Fast WiFi, Study desk, Heating",
-    availabilityDate: property?.availabilityDate ?? "2026-08-01",
+    city: property?.city ?? "",
+    region: property?.region ?? "",
+    university: property?.university ?? "",
+    distance: property?.distance ?? "",
+    roomType: property?.roomType ?? ("" as PropertyFormValues["roomType"]),
+    roommates: typeof property?.roommates === "number" ? property.roommates : ("" as unknown as number),
+    furnished: property?.furnished ?? false,
+    utilitiesIncluded: property?.utilitiesIncluded ?? false,
+    genderPreference: property?.genderPreference ?? ("" as PropertyFormValues["genderPreference"]),
+    amenities: property?.amenities?.join(", ") ?? "",
+    availabilityDate: property?.availabilityDate ?? "",
     verified: property?.verified ?? false,
     featured: property?.popular ?? false,
-    status: property?.status ?? "draft",
-    images: property?.images ?? [assets.property1]
+    status: property?.status ?? ("" as PropertyFormValues["status"]),
+    images: property?.images ?? []
   };
 }
 
@@ -183,7 +189,7 @@ export function AgentDashboard({
   const [editingProperty, setEditingProperty] = useState<AgentProperty | null>(null);
   const [toast, setToast] = useState("");
 
-  async function saveProperty(values: PropertyFormValues, existing?: AgentProperty): Promise<FormSubmissionResult> {
+  async function saveProperty(values: PropertySubmitValues, existing?: AgentProperty): Promise<FormSubmissionResult> {
     const nextProperty = propertyFromValues(values, existing);
     const previousProperties = properties;
 
@@ -341,8 +347,8 @@ function AgentProperties({ properties, onEdit }: { properties: AgentProperty[]; 
   );
 }
 
-function AgentPropertyForm({ property, universities, onSubmit }: { property?: AgentProperty; universities: University[]; onSubmit: (values: PropertyFormValues) => Promise<FormSubmissionResult> }) {
-  const form = useForm<PropertyFormValues>({ resolver: zodResolver(propertySchema), defaultValues: valuesFromProperty(property) });
+function AgentPropertyForm({ property, universities, onSubmit }: { property?: AgentProperty; universities: University[]; onSubmit: (values: PropertySubmitValues) => Promise<FormSubmissionResult> }) {
+  const form = useForm<PropertyFormValues, unknown, PropertySubmitValues>({ resolver: zodResolver(propertySchema), defaultValues: valuesFromProperty(property) });
   const images = useWatch({ control: form.control, name: "images" }) ?? [];
   const [uploadError, setUploadError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -385,7 +391,7 @@ function AgentPropertyForm({ property, universities, onSubmit }: { property?: Ag
     form.setValue("images", next, { shouldValidate: true });
   }
 
-  async function submitForm(values: PropertyFormValues) {
+  async function submitForm(values: PropertySubmitValues) {
     setSubmitError("");
     const result = await onSubmit(values);
     if (!result.ok) {
@@ -402,33 +408,39 @@ function AgentPropertyForm({ property, universities, onSubmit }: { property?: Ag
   return (
     <form className="mt-6 grid gap-5 rounded-[22px] border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-card)]" onSubmit={form.handleSubmit(submitForm)}>
       <div className="grid gap-4 md:grid-cols-2">
-        <Input placeholder="Property title" aria-label="Property title" {...form.register("title")} />
-        <Input type="number" placeholder="Monthly rent in KGS" aria-label="Monthly rent in KGS" {...form.register("priceMonthly")} />
-        <Input placeholder="Location" aria-label="Location" {...form.register("location")} />
-        <Input placeholder="Distance from university" aria-label="Distance from university" {...form.register("distance")} />
-        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="Nearby university" {...form.register("university")}>
-          {universities.map((university) => <option key={university.slug}>{university.name}</option>)}
+        <Input placeholder="Enter property title" aria-label="Property title" {...form.register("title")} />
+        <Input type="number" placeholder="Enter monthly rent in KGS" aria-label="Monthly rent in KGS" {...form.register("priceMonthly")} />
+        <Input placeholder="Select property location" aria-label="Location" {...form.register("location")} />
+        <Input placeholder="e.g. 5 mins from JAIU" aria-label="Distance from university" {...form.register("distance")} />
+        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-medium text-[var(--foreground)]" aria-label="Nearby university" {...form.register("university")}>
+          <option value="" disabled>Choose nearby university</option>
+          {universities.map((university) => <option key={university.slug} value={university.name}>{university.name}</option>)}
         </select>
-        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="Room type" {...form.register("roomType")}>
-          <option>Studio</option><option>Private room</option><option>Shared room</option><option>Apartment</option>
+        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-medium text-[var(--foreground)]" aria-label="Room type" {...form.register("roomType")}>
+          <option value="" disabled>Select room type</option>
+          <option value="Studio">Studio</option><option value="Private room">Private room</option><option value="Shared room">Shared room</option><option value="Apartment">Apartment</option><option value="Dom">Dom</option>
         </select>
-        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="City" {...form.register("city")}>
-          <option>Jalal-Abad</option>
+        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-medium text-[var(--foreground)]" aria-label="City" {...form.register("city")}>
+          <option value="" disabled>Select city</option>
+          <option value="Jalal-Abad">Jalal-Abad</option>
         </select>
-        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="Region" {...form.register("region")}>
-          <option>Jalal-Abad</option>
+        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-medium text-[var(--foreground)]" aria-label="Region" {...form.register("region")}>
+          <option value="" disabled>Select region</option>
+          <option value="Jalal-Abad">Jalal-Abad</option>
         </select>
-        <Input type="number" placeholder="Roommate count" aria-label="Roommate count" {...form.register("roommates")} />
-        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="Gender preference" {...form.register("genderPreference")}>
-          <option>Mixed</option><option>Female only</option><option>Male only</option>
+        <Input type="number" placeholder="Enter roommate count" aria-label="Roommate count" {...form.register("roommates")} />
+        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-medium text-[var(--foreground)]" aria-label="Gender preference" {...form.register("genderPreference")}>
+          <option value="" disabled>Select gender preference</option>
+          <option value="Mixed">Mixed</option><option value="Female only">Female only</option><option value="Male only">Male only</option>
         </select>
         <Input type="date" aria-label="Available from date" {...form.register("availabilityDate")} />
-        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-semibold" aria-label="Listing status" {...form.register("status")}>
-          <option>active</option><option>draft</option><option>unavailable</option>
+        <select className="focus-ring h-12 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[14px] font-medium text-[var(--foreground)]" aria-label="Listing status" {...form.register("status")}>
+          <option value="" disabled>Select listing status</option>
+          <option value="active">active</option><option value="draft">draft</option><option value="unavailable">unavailable</option>
         </select>
       </div>
-      <textarea className="focus-ring min-h-28 rounded-[12px] border border-[var(--border)] bg-[var(--card)] p-4 text-[14px] font-medium" placeholder="Property description" aria-label="Property description" {...form.register("description")} />
-      <Input placeholder="Amenities, comma separated" aria-label="Amenities" {...form.register("amenities")} />
+      <textarea className="focus-ring min-h-28 rounded-[12px] border border-[var(--border)] bg-[var(--card)] p-4 text-[14px] font-medium" placeholder="Describe the apartment, amenities, nearby universities, and student-friendly features." aria-label="Property description" {...form.register("description")} />
+      <Input placeholder="Select amenities, comma separated" aria-label="Amenities" {...form.register("amenities")} />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["furnished", "Furnished status"],
@@ -444,13 +456,18 @@ function AgentPropertyForm({ property, universities, onSubmit }: { property?: Ag
       </div>
       <div className="rounded-[18px] border border-dashed border-[var(--border)] bg-[var(--surface)] p-5" onDrop={(event) => { event.preventDefault(); void handleFiles(event.dataTransfer.files); }} onDragOver={(event) => event.preventDefault()}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <span><strong className="flex items-center gap-2 text-[15px] font-extrabold"><Upload size={17} /> Multi-image upload</strong><small className="mt-1 block text-[12px] font-semibold text-[var(--muted)]">Drag and drop images or choose files. Reorder and remove previews.</small></span>
+          <span><strong className="flex items-center gap-2 text-[15px] font-extrabold"><Upload size={17} /> Multi-image upload</strong><small className="mt-1 block text-[12px] font-semibold text-[var(--muted)]">Drag and drop property images here, or choose files to upload. JPG, PNG, and WebP only.</small></span>
           <label className="focus-ring inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-[var(--border)] bg-[var(--card)] px-4 text-[13px] font-extrabold">
             <ImagePlus size={16} /> Choose images
             <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => void handleFiles(event.target.files)} />
           </label>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {!images.length ? (
+            <div className="col-span-full rounded-[14px] border border-dashed border-[var(--border)] bg-[var(--card)] px-4 py-8 text-center text-[13px] font-medium text-[var(--muted)]">
+              No images uploaded yet. Add at least one photo to publish the listing.
+            </div>
+          ) : null}
           {images.map((image, index) => (
             <div key={`${image}-${index}`} className="rounded-[14px] bg-[var(--card)] p-2">
               <PropertyImage src={image} alt="" width={220} height={140} className="h-28 w-full rounded-[12px] object-cover" />
@@ -463,7 +480,7 @@ function AgentPropertyForm({ property, universities, onSubmit }: { property?: Ag
           ))}
         </div>
       </div>
-      {formErrorMessage ? <p className="text-[13px] font-semibold text-[var(--muted)]">{formErrorMessage}</p> : null}
+      {formErrorMessage ? <p className="text-[13px] font-semibold text-[rgb(191,61,74)]">{formErrorMessage}</p> : null}
       <Button type="submit" disabled={form.formState.isSubmitting}>
         {form.formState.isSubmitting ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
         {form.formState.isSubmitting ? "Saving..." : "Save property"}

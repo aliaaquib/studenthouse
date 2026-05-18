@@ -29,7 +29,7 @@ export type DbProperty = {
   region: string;
   nearby_university_id: string | null;
   distance_from_university: string | null;
-  room_type: "Studio" | "Private room" | "Shared room" | "Apartment";
+  room_type: "Studio" | "Private room" | "Shared room" | "Apartment" | "Dom";
   shared_room: boolean;
   furnished: boolean;
   utilities_included: boolean;
@@ -115,7 +115,7 @@ export function mapDbProperty(row: DbProperty): Property {
     popular: row.featured,
     verified: row.verified,
     genderPreference: row.gender_preference,
-    type: row.room_type === "Studio" ? "Studio" : row.room_type === "Apartment" ? "Apartment" : "Shared Room",
+    type: row.room_type === "Studio" ? "Studio" : row.room_type === "Apartment" ? "Apartment" : row.room_type === "Dom" ? "Dom" : "Shared Room",
     agent: "Verified landlord",
     landlordPhone: row.whatsapp_number ?? `+${WHATSAPP_PHONE}`,
     description: row.description,

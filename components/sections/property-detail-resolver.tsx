@@ -4,9 +4,18 @@ import Link from "next/link";
 import { SearchX } from "lucide-react";
 import { PropertyDetailView } from "@/components/sections/property-detail-view";
 import { Button } from "@/components/ui/button";
+import type { PropertyComment } from "@/types/comment";
 import type { Property } from "@/types/property";
 
-export function PropertyDetailResolver({ slug, properties }: { slug: string; properties: Property[] }) {
+export function PropertyDetailResolver({
+  slug,
+  properties,
+  initialComments
+}: {
+  slug: string;
+  properties: Property[];
+  initialComments: PropertyComment[];
+}) {
   const property = properties.find((item) => item.slug === slug);
 
   if (!property) {
@@ -30,5 +39,5 @@ export function PropertyDetailResolver({ slug, properties }: { slug: string; pro
     .filter((item) => item.id !== property.id && (item.university === property.university || item.city === property.city))
     .slice(0, 2);
 
-  return <PropertyDetailView property={property} similarProperties={similarProperties} />;
+  return <PropertyDetailView property={property} similarProperties={similarProperties} initialComments={initialComments} />;
 }

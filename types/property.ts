@@ -11,7 +11,7 @@ export type Property = {
   university: string;
   distance: string;
   roommates: number;
-  roomType: "Studio" | "Private room" | "Shared room" | "Apartment";
+  roomType: "Studio" | "Private room" | "Shared room" | "Apartment" | "Dom";
   furnished: boolean;
   utilitiesIncluded: boolean;
   badges: string[];
@@ -22,7 +22,7 @@ export type Property = {
   popular?: boolean;
   verified?: boolean;
   genderPreference: "Female only" | "Male only" | "Mixed";
-  type: "Apartment" | "Shared Room" | "Studio";
+  type: "Apartment" | "Shared Room" | "Studio" | "Dom";
   agent: string;
   landlordPhone: string;
   description: string;
@@ -33,7 +33,7 @@ export type Property = {
 export type PropertyFilters = {
   query: string;
   budget: "Any" | "Under 15,000 KGS" | "15,000 - 22,000 KGS" | "22,000+ KGS";
-  roomType: "Any" | "Studio" | "Private room" | "Shared room" | "Apartment";
+  roomType: "Any" | "Studio" | "Private room" | "Shared room" | "Apartment" | "Dom";
   furnished: "Any" | "Furnished" | "Unfurnished";
   utilities: "Any" | "Included" | "Separate";
   genderPreference: "Any" | "Female only" | "Male only" | "Mixed";

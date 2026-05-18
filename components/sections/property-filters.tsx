@@ -13,7 +13,7 @@ import type { PropertyFilters as PropertyFiltersValue, Region } from "@/types/pr
 const filterSchema = z.object({
   query: z.string(),
   budget: z.enum(["Any", "Under 15,000 KGS", "15,000 - 22,000 KGS", "22,000+ KGS"]),
-  roomType: z.enum(["Any", "Studio", "Private room", "Shared room", "Apartment"]),
+  roomType: z.enum(["Any", "Studio", "Private room", "Shared room", "Apartment", "Dom"]),
   furnished: z.enum(["Any", "Furnished", "Unfurnished"]),
   utilities: z.enum(["Any", "Included", "Separate"]),
   genderPreference: z.enum(["Any", "Female only", "Male only", "Mixed"]),
@@ -113,6 +113,7 @@ export function PropertyFilters({
               <option>Private room</option>
               <option>Shared room</option>
               <option>Apartment</option>
+              <option>Dom</option>
             </select>
           </label>
 

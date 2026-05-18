@@ -72,7 +72,7 @@ create table if not exists public.properties (
   region text not null default 'Jalal-Abad',
   nearby_university_id uuid references public.universities(id) on delete set null,
   distance_from_university text,
-  room_type text not null check (room_type in ('Studio', 'Private room', 'Shared room', 'Apartment')),
+  room_type text not null check (room_type in ('Studio', 'Private room', 'Shared room', 'Apartment', 'Dom')),
   shared_room boolean not null default false,
   furnished boolean not null default true,
   utilities_included boolean not null default true,
@@ -132,12 +132,37 @@ create table if not exists public.search_history (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.comments (
+  id uuid primary key default gen_random_uuid(),
+  property_id uuid not null references public.properties(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  parent_comment_id uuid references public.comments(id) on delete cascade,
+  content text not null check (char_length(trim(content)) >= 3),
+  is_edited boolean not null default false,
+  is_hidden boolean not null default false,
+  is_pinned boolean not null default false,
+  likes_count integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.comment_likes (
+  id uuid primary key default gen_random_uuid(),
+  comment_id uuid not null references public.comments(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (comment_id, user_id)
+);
+
 create index if not exists properties_featured_idx on public.properties(featured);
 create index if not exists properties_region_idx on public.properties(region);
 create index if not exists properties_university_idx on public.properties(nearby_university_id);
 create index if not exists property_images_property_idx on public.property_images(property_id, sort_order);
 create index if not exists recent_views_user_viewed_idx on public.recent_views(user_id, viewed_at desc);
 create index if not exists search_history_user_created_idx on public.search_history(user_id, created_at desc);
+create index if not exists comments_property_created_idx on public.comments(property_id, created_at desc);
+create index if not exists comments_parent_idx on public.comments(parent_comment_id);
+create index if not exists comment_likes_comment_idx on public.comment_likes(comment_id);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -153,6 +178,42 @@ drop trigger if exists set_properties_updated_at on public.properties;
 create trigger set_properties_updated_at
 before update on public.properties
 for each row execute function public.set_updated_at();
+
+drop trigger if exists set_comments_updated_at on public.comments;
+create trigger set_comments_updated_at
+before update on public.comments
+for each row execute function public.set_updated_at();
+
+create or replace function public.sync_comment_like_count()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'INSERT' then
+    update public.comments
+    set likes_count = likes_count + 1
+    where id = new.comment_id;
+    return new;
+  elsif tg_op = 'DELETE' then
+    update public.comments
+    set likes_count = greatest(likes_count - 1, 0)
+    where id = old.comment_id;
+    return old;
+  end if;
+
+  return null;
+end;
+$$;
+
+drop trigger if exists sync_comment_likes_insert on public.comment_likes;
+create trigger sync_comment_likes_insert
+after insert on public.comment_likes
+for each row execute function public.sync_comment_like_count();
+
+drop trigger if exists sync_comment_likes_delete on public.comment_likes;
+create trigger sync_comment_likes_delete
+after delete on public.comment_likes
+for each row execute function public.sync_comment_like_count();
 
 create or replace function public.is_admin()
 returns boolean
@@ -222,6 +283,8 @@ alter table public.favorites enable row level security;
 alter table public.inquiries enable row level security;
 alter table public.recent_views enable row level security;
 alter table public.search_history enable row level security;
+alter table public.comments enable row level security;
+alter table public.comment_likes enable row level security;
 
 drop policy if exists "Profiles are readable by owner or admin" on public.profiles;
 create policy "Profiles are readable by owner or admin" on public.profiles
@@ -326,6 +389,32 @@ create policy "Users manage own recent views" on public.recent_views for all usi
 
 drop policy if exists "Users manage own search history" on public.search_history;
 create policy "Users manage own search history" on public.search_history for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Public can read visible comments" on public.comments;
+create policy "Public can read visible comments" on public.comments
+for select using (is_hidden = false or public.is_admin());
+
+drop policy if exists "Authenticated users insert comments" on public.comments;
+create policy "Authenticated users insert comments" on public.comments
+for insert with check (auth.uid() = user_id);
+
+drop policy if exists "Users update own comments and admins update all comments" on public.comments;
+create policy "Users update own comments and admins update all comments" on public.comments
+for update using (auth.uid() = user_id or public.is_admin())
+with check (auth.uid() = user_id or public.is_admin());
+
+drop policy if exists "Users delete own comments and admins delete all comments" on public.comments;
+create policy "Users delete own comments and admins delete all comments" on public.comments
+for delete using (auth.uid() = user_id or public.is_admin());
+
+drop policy if exists "Public can read comment likes" on public.comment_likes;
+create policy "Public can read comment likes" on public.comment_likes
+for select using (true);
+
+drop policy if exists "Users manage own comment likes" on public.comment_likes;
+create policy "Users manage own comment likes" on public.comment_likes
+for all using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 
 insert into public.regions (name, is_active, coming_soon)
 values

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, BadgeCheck, CalendarDays, Heart, MapPin, MessageCircle, PlayCircle, Sofa, Users, Wifi } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { CommentsSection } from "@/components/comments/comments-section";
 import { ContactForm } from "@/components/sections/contact-form";
 import { PropertyCard } from "@/components/sections/property-card";
 import { PropertyImage } from "@/components/ui/property-image";
@@ -12,6 +13,7 @@ import { trackPropertyViewAction } from "@/lib/actions/user-data";
 import { getWhatsAppHref } from "@/lib/property-utils";
 import { useAdminSettings } from "@/hooks/use-admin-settings";
 import { useSavedProperties } from "@/hooks/use-saved-properties";
+import type { PropertyComment } from "@/types/comment";
 import type { Property } from "@/types/property";
 
 const tourItems = [
@@ -20,7 +22,15 @@ const tourItems = [
   { icon: BadgeCheck, title: "Verified host", copy: "Student-safe listing checks" }
 ];
 
-export function PropertyDetailView({ property, similarProperties }: { property: Property; similarProperties: Property[] }) {
+export function PropertyDetailView({
+  property,
+  similarProperties,
+  initialComments
+}: {
+  property: Property;
+  similarProperties: Property[];
+  initialComments: PropertyComment[];
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const { whatsAppPhone } = useAdminSettings();
@@ -145,6 +155,7 @@ export function PropertyDetailView({ property, similarProperties }: { property: 
             {property.university} is {property.distance.toLowerCase()}, with student-friendly transit, grocery access, and verified landlord support nearby.
           </p>
         </div>
+        <CommentsSection key={property.id} propertyId={property.id} propertyName={property.name} propertySlug={property.slug} initialComments={initialComments} />
         {similarProperties.length > 0 ? (
           <div className="mt-12">
             <h2 className="text-[22px] font-semibold leading-[1.4]">Similar apartments</h2>

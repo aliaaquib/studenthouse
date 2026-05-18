@@ -102,6 +102,7 @@ function inferRoomType(query: string): PropertyFilters["roomType"] {
   if (normalized.includes("shared room") || normalized.includes("shared")) return "Shared room";
   if (normalized.includes("private room")) return "Private room";
   if (normalized.includes("studio")) return "Studio";
+  if (normalized.includes("dom") || normalized.includes("dorm")) return "Dom";
   if (normalized.includes("apartment") || normalized.includes("house")) return "Apartment";
   return "Any";
 }
